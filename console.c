@@ -242,6 +242,12 @@ int _consoleVars( const char* arg, void* data )
   return( CON_CALLBACK_HIDE_RETURN_VALUE );
 }
 
+int _conEcho( const char* arg, void* unused )
+{
+  eoPrint("%s", arg);
+  return(CON_CALLBACK_HIDE_RETURN_VALUE);
+}
+
 void consoleInit()
 {
   consoleHeight = eoTxtHeight(FONT_SYS);
@@ -256,14 +262,13 @@ void consoleInit()
       glTexCoord2f(1,0); glVertex2f(eoSetting()->res.x,0);
       glTexCoord2f(0,0); glVertex2f(0,0);
     glEnd();
-    ///TODO: Display custom text here :) ( eoConsoleText )
-//    eoTxtWrite( FONT_LARGE, TXT_RIGHT, "Excessive^2Overkill!", eoSetting()->res.x,consoleHeight-eoTxtHeight(FONT_LARGE)-eoTxtHeight(FONT_SMALL) );
-//    eoTxtWrite( FONT_SMALL, TXT_RIGHT, "Copyright 2011 Jimmy Christensen / Heroic Software ", eoSetting()->res.x,consoleHeight-eoTxtHeight(FONT_SMALL) );
 
   glEndList();
 
   //Hook console to F1 key.
   eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_DOWN|INPUT_FLAG_EXCLUSIVE, SDLK_F1, &_consoleToggle );
+  eoFuncAdd( _conEcho,NULL, "echo" );
+
   eoPrint("GL Console initialized.",CONSOLE_LINES,eoTxtHeight(FONT_SYS));
 }
 

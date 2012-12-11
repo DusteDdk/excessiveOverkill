@@ -255,7 +255,6 @@ typedef struct engObj_s {
 
 
 typedef struct {
-  listItem* bgObjs;
   listItem* objs;
 } world_s;
 

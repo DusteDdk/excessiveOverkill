@@ -69,7 +69,7 @@ void gfxEngInit()
   eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_DOWN, SDLK_F12, screenShotInput );
 
   //Test grid
-  const GLfloat width=100, height=20,length=20;
+  const GLfloat width=20, height=10,length=30;
   engTestBoxId= glGenLists( 1 );
   glNewList( engTestBoxId, GL_COMPILE );
     glDisable( GL_LIGHTING );
@@ -92,6 +92,21 @@ void gfxEngInit()
       glVertex3f(-width,-height,-length);
       glVertex3f(width,-height,-length);
 
+      //X cross1
+      glVertex3f(-width,height,length);
+      glVertex3f(width,height,-length);
+
+      glVertex3f(width,height,length);
+      glVertex3f(-width,height,-length);
+
+      //X Cross2
+      glVertex3f(-width,-height,length);
+      glVertex3f(width,-height,-length);
+
+      glVertex3f(width,-height,length);
+      glVertex3f(-width,-height,-length);
+
+
 
       //Y
       glColor4f(0,1,0,1);
@@ -107,6 +122,21 @@ void gfxEngInit()
       glVertex3f(-width,-height,-length);
       glVertex3f(-width,height,-length);
 
+      //Y cross 1
+      glVertex3f(width,-height,length);
+      glVertex3f(width,height,-length);
+
+      glVertex3f(width,height,length);
+      glVertex3f(width,-height,-length);
+      //Y cross 2
+      glVertex3f(-width,-height,length);
+      glVertex3f(-width,height,-length);
+
+      glVertex3f(-width,height,length);
+      glVertex3f(-width,-height,-length);
+
+
+
       //Z
       glColor4f(0,0,1,1);
       glVertex3f(width,height,-length);
@@ -120,6 +150,21 @@ void gfxEngInit()
 
       glVertex3f(-width,-height,-length);
       glVertex3f(-width,-height,length);
+
+      //Z cross 1
+      glVertex3f(width,height,-length);
+      glVertex3f(-width,-height,-length);
+
+      glVertex3f(width,-height,-length);
+      glVertex3f(-width,height,-length);
+
+      //Z cross2
+      glVertex3f(width,height,length);
+      glVertex3f(-width,-height,length);
+
+      glVertex3f(width,-height,length);
+      glVertex3f(-width,height,length);
+
     glEnd();
 
     glDisable( GL_COLOR_MATERIAL );

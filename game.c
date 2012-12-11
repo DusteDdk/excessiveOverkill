@@ -151,6 +151,13 @@ void _gameDeleteObj( listItem* delObjs)
   while( (it=it->next) )
   {
     obj=(engObj*)it->data;
+
+    //If there's gamedata we will yell about it.
+    //This is to avoid forgetting to free game specific data.
+    //In most cases this data is unique to the object and needs freeing.
+    if( obj->gameData != NULL )
+      eoPrint("(game.c _gameDeleteObj):Possible memoryleak: Object %p have a gameData pointer to %p!", obj, obj->gameData );
+
     //First, we delete the objects components
     _gameDeleteObj( obj->components );
 
@@ -203,8 +210,6 @@ void gameRun()
 
   }
 
-  ///TODO:Draw background
-
   //Draw objects
   gameDraw(state.world.objs);
   //Draw particle systems
@@ -240,6 +245,7 @@ engObj* eoObjCreate(int type)
   obj->type = type;
   obj->id = state.nextObj;
   obj->components = initList();
+  obj->gameData = NULL;
   return(obj);
 }
 
@@ -269,11 +275,12 @@ void eoObjBake(engObj* obj)
     //Check data
     if( obj->sprite )
     {
+      eoSpriteScale( obj->sprite, 0.01, 0.01 );
       //Set hitbox
       //We divide by 2 because middle of 3D objects are 0,0,0
-      obj->_hitBox.y = 0.1;
-      obj->_hitBox.x = (obj->sprite->base->spriteSize.x * obj->sprite->scale.x)/2.0;
-      obj->_hitBox.z = (obj->sprite->base->spriteSize.y * obj->sprite->scale.y)/2.0;
+      obj->_hitBox.y = 0.01;
+      obj->_hitBox.x = (obj->sprite->base->spriteSize.x * obj->sprite->scale.x);
+      obj->_hitBox.z = (obj->sprite->base->spriteSize.y * obj->sprite->scale.y);
     } else {
       eoPrint("Object %i have no sprite, not baking.", obj->id );
       return;
@@ -429,13 +436,15 @@ void gameDraw(listItem* objList)
       break;
 
       case ENGOBJ_SPRITE:
+        glPushMatrix();
         eoGfxBillboardBegin();
+        glEnable(GL_TEXTURE_2D);
         glDisable( GL_LIGHTING );
-        glDepthMask( GL_FALSE );
+        glColor4f( 1.0,1.0,1.0,1.0 );
         spriteDraw( obj->sprite );
-        glDepthMask( GL_TRUE );
         glEnable( GL_LIGHTING );
         eoGfxBillBoardEnd();
+        glPopMatrix();
       break;
 
       case ENGOBJ_SOUND:
