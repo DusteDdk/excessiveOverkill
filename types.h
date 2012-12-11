@@ -22,7 +22,6 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 #include <string.h>
-
 #include "gl.h"
 #include "list.h"
 #include <SDL/SDL.h>
@@ -64,6 +63,7 @@ typedef struct {
   vec3 pos;     //Camera position
   vec3 target;  //Camera target position
   GLfloat zoom; //Camera zooming
+  GLfloat zNear; //Does strange things to a lens :)
 } camData;
 
 /*******************************************************************************
@@ -224,7 +224,7 @@ typedef struct {
 //typedef void (*engObjColCallback_f)(engObj_s*, engObj_s*);  //Called upon collision with object if present. First argument is the object that was hit, the second the one it hit.
 
 
-typedef struct engObj_s {
+typedef struct eoObj_struct {
 
   int id;
   int deleteMe;
@@ -246,12 +246,12 @@ typedef struct engObj_s {
   sound_s* sound;
   particleEmitter_s* emitter;
 
-  void (*thinkFunc)(struct engObj_s*);
-  void (*colFunc)(struct engObj_s*,struct engObj_s*);
+  void (*thinkFunc)(struct eoObj_struct*);
+  void (*colFunc)(struct eoObj_struct*,struct eoObj_struct*);
 
   listItem* components; //Any attached engine objects
-  struct engObj_s* parent; //0 if this is the top
-} engObj;
+  struct eoObj_struct* parent; //0 if this is the top
+} engObj_s;
 
 
 typedef struct {

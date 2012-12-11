@@ -47,9 +47,11 @@ particleEmitter_s* eoPsysNewEmitter()
   e->color[0] = 1.0;
   e->color[1] = 1.0;
   e->color[2] = 1.0;
+  e->color[3] = 1.0;
   e->colorVariance[0] = 0.0;
   e->colorVariance[1] = 0.0;
   e->colorVariance[2] = 0.0;
+  e->colorVariance[3] = 0.0;
 
   e->rotateParticles = 1;
   return(e);
@@ -308,7 +310,6 @@ void psysDraw()
           particleStrength=(GLfloat)p->lifeLeft/(GLfloat)p->life;
           if( e->fade )
             p->color[3] = particleStrength;
-
 
             //Set color+alpha
             glColor4fv( p->color );

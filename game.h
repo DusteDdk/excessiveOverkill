@@ -45,11 +45,11 @@ void gameInit();
 void eoWorldClear();
 
 
-engObj* eoObjCreate(int type);
-void eoObjBake(engObj* obj);
-void eoObjAdd(engObj* obj);
-void eoObjDel(engObj* obj);
-void eoObjAttach( engObj* parent, engObj* child );
+engObj_s* eoObjCreate(int type);
+void eoObjBake(engObj_s* obj);
+void eoObjAdd(engObj_s* obj);
+void eoObjDel(engObj_s* obj);
+void eoObjAttach( engObj_s* parent, engObj_s* child );
 
 void gameRun();
 

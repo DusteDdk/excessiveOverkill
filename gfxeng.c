@@ -61,6 +61,7 @@ void gfxEngInit()
   eoVarAdd(CON_TYPE_VEC3,0, &camGet()->pos, "campos");
   eoVarAdd(CON_TYPE_VEC3,0, &camGet()->target, "camlook");
   eoVarAdd(CON_TYPE_FLOAT,0, &camGet()->zoom, "camzoom");
+  eoVarAdd(CON_TYPE_FLOAT,0, &camGet()->zNear, "camznear");
 
 
   eoVarAdd(CON_TYPE_INT, 0, &engShowTestBox, "testbox");

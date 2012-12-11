@@ -61,10 +61,10 @@ void gameInit()
 void _gameRunObject(listItem* objList)
 {
   listItem* it=objList;
-  engObj* obj;
+  engObj_s* obj;
   while( (it=it->next) )
   {
-    obj=(engObj*)it->data;
+    obj=(engObj_s*)it->data;
 
     //If we're the server, we do cool stuff
     if( state.isServer )
@@ -86,7 +86,7 @@ void _gameRunObject(listItem* objList)
 
 }
 
-int _gameBoxCollision(engObj* a, engObj* b)
+int _gameBoxCollision(engObj_s* a, engObj_s* b)
 {
   GLfloat aleft, aright, atop, abot, bleft,bright,btop,bbot;
 
@@ -114,13 +114,13 @@ int _gameBoxCollision(engObj* a, engObj* b)
 void _gameRunCollisions()
 {
   listItem* it=state.world.objs;
-  engObj* obj;
+  engObj_s* obj;
 
   listItem* checkIt;
-  engObj* checkObj;
+  engObj_s* checkObj;
   while( (it=it->next) )
   {
-    obj=(engObj*)it->data;
+    obj=(engObj_s*)it->data;
 
     if( obj->colTeam )
     {
@@ -128,7 +128,7 @@ void _gameRunCollisions()
       checkIt=state.world.objs;
       while( (checkIt=checkIt->next) )
       {
-        checkObj = (engObj*)checkIt->data;
+        checkObj = (engObj_s*)checkIt->data;
         if( checkObj->colTeam && checkObj->colTeam != obj->colTeam )
         {
           //These two can collide, do stupid simple detection
@@ -146,11 +146,11 @@ void _gameRunCollisions()
 void _gameDeleteObj( listItem* delObjs)
 {
   listItem* it=delObjs;
-  engObj* obj;
+  engObj_s* obj;
 
   while( (it=it->next) )
   {
-    obj=(engObj*)it->data;
+    obj=(engObj_s*)it->data;
 
     //If there's gamedata we will yell about it.
     //This is to avoid forgetting to free game specific data.
@@ -225,7 +225,7 @@ void eoWorldClear()
   listItem* it = state.world.objs;
   while( (it=it->next) )
   {
-    eoObjDel( (engObj*)it->data );
+    eoObjDel( (engObj_s*)it->data );
   }
   _gameDeleteObj( state._deleteObjs );
 
@@ -235,12 +235,12 @@ void eoWorldClear()
 
 }
 
-engObj* eoObjCreate(int type)
+engObj_s* eoObjCreate(int type)
 {
   state.nextObj++;
 
-  engObj* obj = malloc( sizeof(engObj) );
-  memset( obj, 0, sizeof(engObj) );
+  engObj_s* obj = malloc( sizeof(engObj_s) );
+  memset( obj, 0, sizeof(engObj_s) );
 
   obj->type = type;
   obj->id = state.nextObj;
@@ -249,7 +249,7 @@ engObj* eoObjCreate(int type)
   return(obj);
 }
 
-void eoObjBake(engObj* obj)
+void eoObjBake(engObj_s* obj)
 {
   if( obj->_baked )
   {
@@ -312,7 +312,7 @@ void eoObjBake(engObj* obj)
   obj->_baked=1;
 }
 
-void eoObjAdd(engObj* obj)
+void eoObjAdd(engObj_s* obj)
 {
   if( obj->_baked )
     listAddData( state.world.objs, (void*)obj );
@@ -320,13 +320,13 @@ void eoObjAdd(engObj* obj)
     eoPrint("Object %i not baked.", obj->id);
 }
 
-void eoObjAttach( engObj* parent, engObj* child )
+void eoObjAttach( engObj_s* parent, engObj_s* child )
 {
   listAddData( parent->components, (void*)child );
   child->parent = parent;
 }
 
-void eoObjDel(engObj* obj)
+void eoObjDel(engObj_s* obj)
 {
   //This way we make sure we don't try to delete the same object twice-
   if( !obj->deleteMe )
@@ -336,7 +336,7 @@ void eoObjDel(engObj* obj)
   }
 }
 
-void gameSimMovement(engObj* obj)
+void gameSimMovement(engObj_s* obj)
 {
   obj->pos.x += obj->vel.x;
   obj->pos.y += obj->vel.y;
@@ -366,11 +366,11 @@ void gameSimMovement(engObj* obj)
 void gameDraw(listItem* objList)
 {
   listItem* it=objList;
-  engObj* obj;
+  engObj_s* obj;
 
   while( (it=it->next) )
   {
-    obj=(engObj*)it->data;
+    obj=(engObj_s*)it->data;
 
     gameDraw( obj->components );
 

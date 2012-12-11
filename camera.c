@@ -57,6 +57,7 @@ void camInit()
 {
   memset( &cam, 0, sizeof(camData) );
   cam.zoom = 1.0;
+  cam.zNear=1.5; //Not very scientific..
   camFree=0;
   camPlaybackFrame=0;
   camPlaybackState=0;
@@ -263,7 +264,7 @@ void camBegin()
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glFrustum( -eoSetting()->aspect*cam.zoom, eoSetting()->aspect*cam.zoom, -1.0*cam.zoom, 1.0*cam.zoom, 1, 500.0);
+  glFrustum( -eoSetting()->aspect*cam.zoom, eoSetting()->aspect*cam.zoom, -1.0*cam.zoom, 1.0*cam.zoom, cam.zNear, 5000.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
@@ -283,6 +284,10 @@ void eoCamTargetSet(vec3 p)
     cam.target=p;
 }
 
+void eoCamSetZnear( GLfloat z )
+{
+  cam.zNear=z;
+}
 
 camData* camGet()
 {

@@ -17,6 +17,9 @@
  * along with ExcessiveOverkill.  If not, see <http://www.gnu.org/licenses/>. *
  ******************************************************************************/
 
+#define _GNU_SOURCE
+#include <stdio.h>
+
 #include "console.h"
 
 
@@ -25,9 +28,6 @@
 #endif
 
 //We like vasprintf
-#define _GNU_SOURCE
-#include <stdio.h>
-
 #include <stdlib.h>
 #include <string.h>
 #include "list.h"
