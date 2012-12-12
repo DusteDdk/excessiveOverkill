@@ -27,7 +27,6 @@
     #include "3rd/winvasp.h"
 #endif
 
-//We like vasprintf
 #include <stdlib.h>
 #include <string.h>
 #include "list.h"
@@ -38,16 +37,17 @@
 #include "data.h"
 #include "strings.h"
 #define CONSOLE_LINES 40
+#define CON_MAX_CMD_LEN 511
 
 static char buf[1024];
 static char cmd[512];
 static char arg[512];
 static char val[512];
+static char command[512];
 
 static GLfloat consoleHeight;
 static listItem* con;
 static listItem* cVs;
-static listItem* command; //Current input
 static listItem* history;
 static int editPos=0;
 static int histPos=0;
@@ -67,61 +67,66 @@ typedef struct {
 
 void consoleAutoComplete()
 {
-  listItem* itCmd;  //List of characters in current command.
   listItem* itCv; //List of cVars
   cVar* c;
   itCv = cVs;
   char* cvName;
-  char* best=0;
-  int cmdLen = listSize( command );
-  int i;
+  char* match=0;
+  int cmdLen = strlen( command );
+  int i=0;
   int len=0;
   int lenBest=0;
+  int numMatches=0;
 
+  //For each registered cvar
   while( (itCv=itCv->next) )
   {
     c = (cVar*)itCv->data;
     cvName = c->name;
 
+    //If the cvar is longer than the command being entered
     if( strlen( cvName ) >= cmdLen )
     {
-      itCmd = command;
-      i=0;
-      while( (itCmd=itCmd->next) )
+      len=0;
+      //Loop through the characters in the command, comparing them to cvName
+      for( i=0; i < cmdLen; i++ )
       {
-        if( i < strlen( cvName ) )
-        {
 
-          if( cvName[i] == (int)itCmd->data )
+          if( cvName[i] == command[i] )
           {
             len++;
           } else {
             len=0;
             break;
           }
-          i++;
-        }
+
       }
       if( len )
+      {
         eoPrint("Match: %s", cvName );
+        numMatches++;
+      }
     }
 
     if( len>lenBest )
     {
       lenBest=len;
-      best=cvName;
+      match=cvName;
     }
   }
 
-  if( best )
+  //We only autocomplete when there is a single match.
+  if( numMatches == 1 )
   {
-    freeList( command );
-    sprintf(buf, "%s ", best );
-    command = listFromBuf( buf );
-    editPos = strlen( buf );
-
-  } else {
-    eoPrint("Nothing that starts with that found.");
+    sprintf(buf, "%s ", match );
+    strcpy( command, buf );
+    editPos = strlen( command );
+  } else if( numMatches > 1)
+  {
+    eoPrint(" -- %i possible --", numMatches );
+  } else if( numMatches == 0 )
+  {
+    eoPrint("Nothing starting with '%s' found.", command);
   }
 
 }
@@ -129,6 +134,7 @@ void consoleAutoComplete()
 void _consoleInput(inputEvent* e)
 {
   int c = e->key->sym.sym;
+  int i;
   if(c != SDLK_RETURN)
   {
     if( c== SDLK_BACKSPACE )
@@ -136,42 +142,44 @@ void _consoleInput(inputEvent* e)
       if(editPos>0)
       {
         editPos--;
-        listRemovePos( command, editPos );
+        command[editPos]=0;
       }
     } if( e->key->sym.sym == SDLK_DELETE )
     {
-      if(editPos < listSize(command) && listSize(command) > 0)
+      if(editPos < strlen(command) && strlen(command) > 0)
       {
-        listRemovePos( command, editPos );
+        //Remove character at editPos from string
+        for( i=editPos; i < strlen(command)-1;i++)
+        {
+          command[i]= command[i+1];
+        }
       }
     } else if( e->key->sym.sym==SDLK_LEFT )
     {
       if( editPos>0 ) editPos--;
     } else if( e->key->sym.sym==SDLK_RIGHT )
     {
-      if( editPos < listSize( command ) ) editPos++;
+      if( editPos < strlen( command ) ) editPos++;
     } else if( e->key->sym.sym == SDLK_UP )
     {
       if(histPos<listSize(history))
       {
         histPos++;
-        freeList( command );
-        command = listFromBuf( (char*)listGetItemData( history,histPos-1 ) );
-        editPos = listSize( command );
+        strcpy( command, (char*)listGetItemData( history,histPos-1 ) );
+        editPos = strlen( command );
       }
     } else if( e->key->sym.sym == SDLK_DOWN)
     {
       if(histPos>0)
       {
         histPos--;
-        freeList( command );
-        command = listFromBuf( (char*)listGetItemData( history,histPos ) );
-        editPos = listSize( command );
+        strcpy( command, (char*)listGetItemData( history,histPos ) );
+        editPos = strlen( command );
       }
 
     } else if( e->key->sym.sym == SDLK_TAB )
     {
-      if( listSize( command ) > 0 )
+      if( strlen( command ) > 0 )
       {
         consoleAutoComplete();
       }
@@ -187,22 +195,25 @@ void _consoleInput(inputEvent* e)
           else
           c=toupper(c);
         }
-        listInsertData( command, (void*)c, editPos );
-        editPos++;
+        if( editPos < CON_MAX_CMD_LEN )
+        {
+          command[editPos] = c;
+          editPos++;
+          command[editPos] = 0;
+        }
       }
     }
   } else {
-    if( listSize(command) )
+    if( strlen(command) )
     {
       editPos=0;
       histPos=0;
-      listToBuf(command, buf);
-      char* he = malloc(  (strlen(buf)+1)*sizeof(char) );
-      strcpy( he, buf );
-      freeList( command );
-      command = initList();
-      eoExec(buf);
+      char* he = malloc( (strlen(command)+1)*sizeof(char) );
+      strcpy( he, command );
       listInsertData( history, (void*)he, 0);
+
+      eoExec(command);
+      command[0] = 0;
     }
   }
 }
@@ -250,8 +261,8 @@ int _conEcho( const char* arg, void* unused )
 
 void consoleInit()
 {
-  consoleHeight = eoTxtHeight(FONT_SYS);
-  consoleHeight *= CONSOLE_LINES+1;
+  consoleHeight = eoTxtHeight(FONT_SYS) * (CONSOLE_LINES+1);
+
   consoleList = glGenLists(1);
   glNewList(consoleList, GL_COMPILE);
     glLoadIdentity();
@@ -265,6 +276,8 @@ void consoleInit()
 
   glEndList();
 
+  command[0]=0;
+
   //Hook console to F1 key.
   eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_DOWN|INPUT_FLAG_EXCLUSIVE, SDLK_F1, &_consoleToggle );
   eoFuncAdd( _conEcho,NULL, "echo" );
@@ -277,16 +290,21 @@ void consoleInit()
 void eoPrint(const char* format, ...)
 {
   char* buffer;
+  int i;
   va_list args;
   va_start (args, format);
-  vasprintf(&buffer,format,args);
+  if( vasprintf(&buffer,format,args) < 0 )
+  {
+    printf("Error: vasprintf failed in eoPrint.\n");
+    return;
+  }
   va_end (args);
 
   if(!init)
   {
     con = initList();
     cVs = initList();
-    command = initList();
+    command[0] = 0;
     history = initList();
     eoVarAdd( CON_TYPE_FLOAT_ARRAY, 4, conBgColor, "concol" );
     eoFuncAdd( _consoleHelp, NULL, "help" );
@@ -296,8 +314,22 @@ void eoPrint(const char* format, ...)
 
   char* line = malloc( (strlen(buffer)+1+100)*sizeof(char) );
   sprintf(line, "^4%i^0>^1 %s", curLine, buffer );
+  free(buffer);
   listAddData( con, (void*)line );
 
+  //Output line to stdout too.
+  for(i=0; i<strlen(line); i++)
+  {
+    if( line[i]=='^' && i+1 <= strlen(line) )
+    {
+      i+=1;
+    } else {
+      putchar( line[i] );
+    }
+  }
+  putchar( '\n' );
+
+  //Increment line number
   curLine++;
   //When we reach 500 lines, we cut off the first line.
   if(curLine>CONSOLE_LINES)
@@ -307,9 +339,6 @@ void eoPrint(const char* format, ...)
     //Very fast removal of first object since lists are ordered.
     listRemoveItem( con, con->next );
   }
-
-  printf("%i | %s\n", curLine,buffer);
-  free(buffer);
 
 }
 
@@ -330,9 +359,9 @@ void consoleRender()
     line++;
   }
 
-  listToBuf( command, buf );
-  eoTxtWriteShadow( FONT_SYS, TXT_LEFT, buf, 5, consoleHeight-eoTxtHeight(FONT_SYS) );
-  eoTxtWriteShadow( FONT_SYS, TXT_LEFT, "^3_", 5+(eoTxtLineWidth(FONT_SYS, buf, editPos)) , consoleHeight-eoTxtHeight(FONT_SYS) );
+
+  eoTxtWriteShadow( FONT_SYS, TXT_LEFT, command, 5, consoleHeight-eoTxtHeight(FONT_SYS) );
+  eoTxtWriteShadow( FONT_SYS, TXT_LEFT, "^3_", 5+(eoTxtLineWidth(FONT_SYS, command, editPos)) , consoleHeight-eoTxtHeight(FONT_SYS) );
 }
 
 void eoVarAdd( int type, int len, void* data, const char* name )

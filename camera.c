@@ -176,7 +176,11 @@ void eoCamRecPlay( const char* fileName, int absolute, void (*finishedCallback)(
   if( camFile )
   {
     //Read header
-    fread( &camHead, sizeof( camFileHeader ), 1, camFile );
+    int nr =fread( &camHead, sizeof( camFileHeader ), 1, camFile );
+    if( nr != 1 )
+    {
+      eoPrint("Couldn't read header from camera file '%s' correctly.", fileName);
+    }
     //Check header
     if( camHead.version != 1 )
       eoPrint("Camera file '%s' wrong version", fileName);
@@ -185,7 +189,11 @@ void eoCamRecPlay( const char* fileName, int absolute, void (*finishedCallback)(
     camPlaybackData = malloc( sizeof(camData)*camHead.frames );
 
     //copy data
-    fread( camPlaybackData, sizeof(camData), camHead.frames, camFile );
+    nr = fread( camPlaybackData, sizeof(camData), camHead.frames, camFile );
+    if( nr != camHead.frames )
+    {
+      eoPrint("Error: Read %i frames of the %i specified in header of '%s'", fileName );
+    }
 
     camPlaybackState = CAM_PLAYSTATE_PLAYING;
     camPlaybackPosition = absolute;
@@ -205,8 +213,7 @@ int camConPlayRec( const char* args, void* data )
   eoPrint("Playing recording: %s", args);
   strcpy(buf, args);
   eoCamRecPlay( buf, TRUE, NULL );
-//  eoCamRecPlay( "test.rec", TRUE, NULL );
-    _consoleToggle( NULL );
+  _consoleToggle( NULL );
   return( CON_CALLBACK_HIDE_RETURN_VALUE );
 }
 

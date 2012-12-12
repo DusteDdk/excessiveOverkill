@@ -45,9 +45,6 @@ listItem* initList();
 void freeList(listItem* start); //Only frees list, you still need to recurse through it and free data ptrs however they need to be.
 int listSize(listItem* start);
 
-int listToBuf( listItem* start, char* buf ); //Add each element in list to buffer, returns amount of items added.
-listItem* listFromBuf( const char* buf );
-
 void* listGetItemData(listItem* start, int index);
 
 

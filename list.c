@@ -169,27 +169,3 @@ void* listGetItemData(listItem* start, int index)
   }
   return(0);
 }
-
-int listToBuf( listItem* start, char* buf )
-{
-  listItem* it = start;
-  int i=0;
-  while( (it=it->next) )
-  {
-    buf[i] = (int)it->data;
-    i++;
-  }
-  buf[i] = 0;
-  return( i-1 );
-}
-
-listItem* listFromBuf( const char* buf )
-{
-  listItem* l = initList();
-  int i;
-  for( i=0; i<strlen(buf); i++ )
-  {
-    listAddData( l, (void*)((int)buf[i]) );
-  }
-  return( l );
-}
