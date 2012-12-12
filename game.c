@@ -29,7 +29,7 @@ void _gameTogglePause( inputEvent* e )
   if( state.isPaused )
     eoPrint("Game is paused.");
   else
-    eoPrint("Game is not paused.");
+    eoPrint("Game no longer paused.");
 }
 
 int eoPauseGet()
@@ -43,7 +43,7 @@ void eoPauseSet(int p)
 }
 
 
-void gameInit()
+void eoGameInit()
 {
   memset( &state, 0, sizeof(gameState_s) );
   eoPrint("gameInit();");
@@ -55,6 +55,66 @@ void gameInit()
 
   state.world.objs = initList();
   state._deleteObjs = initList();
+  state.world.gameFrameStart = NULL;
+  state.world.objSimFunc = NULL;
+  state.world.initialized = 1;
+
+}
+
+void _gameDeleteObj( listItem* delObjs)
+{
+  listItem* it=delObjs;
+  engObj_s* obj;
+
+  while( (it=it->next) )
+  {
+    obj=(engObj_s*)it->data;
+
+    //If there's gamedata we will yell about it.
+    //This is to avoid forgetting to free game specific data.
+    //In most cases this data is unique to the object and needs freeing.
+    if( obj->gameData != NULL )
+      eoPrint("(game.c _gameDeleteObj):Possible memoryleak: Object %p have a gameData pointer to %p!", obj, obj->gameData );
+
+    //First, we delete the objects components
+    _gameDeleteObj( obj->components );
+
+    //We remove the object form the world list.
+    listRemoveByData( state.world.objs, it->data );
+
+    //And we remove the object from the list
+    it=listRemoveItem( delObjs, it );
+
+    //If it's an emitter, we remove it
+    if( obj->type==ENGOBJ_PAREMIT )
+    {
+      eoPsysFree( obj->emitter );
+    }
+
+    //Then we delete the object itself
+    free(obj);
+
+  }
+}
+
+void eoWorldClear()
+{
+
+  //Free world object list
+  listItem* it = state.world.objs;
+  while( (it=it->next) )
+  {
+    eoObjDel( (engObj_s*)it->data );
+  }
+  _gameDeleteObj( state._deleteObjs );
+
+  freeList( state.world.objs );
+  freeList( state._deleteObjs );
+
+  //Set 0 so we can detect that it's freed.
+  state.world.objs = 0;
+  state.nextObj = 0;
+  state.world.initialized = 0;
 
 }
 
@@ -71,9 +131,14 @@ void _gameRunObject(listItem* objList)
     {
       if(obj->thinkFunc)
         obj->thinkFunc(obj);
+
+	  //If the clientcode wants to be called with every object.
+      if( state.world.objSimFunc )
+      	state.world.objSimFunc(obj);
+
     }
 
-    //Movement is simulated seperately so stuff keeps moving even though packages does not come every frame
+    //Movement is simulated seperately so stuff keeps moving even if packages does not come every frame
     gameSimMovement(obj);
 
     //Now we simulate the attached objects if any
@@ -143,41 +208,6 @@ void _gameRunCollisions()
   }
 }
 
-void _gameDeleteObj( listItem* delObjs)
-{
-  listItem* it=delObjs;
-  engObj_s* obj;
-
-  while( (it=it->next) )
-  {
-    obj=(engObj_s*)it->data;
-
-    //If there's gamedata we will yell about it.
-    //This is to avoid forgetting to free game specific data.
-    //In most cases this data is unique to the object and needs freeing.
-    if( obj->gameData != NULL )
-      eoPrint("(game.c _gameDeleteObj):Possible memoryleak: Object %p have a gameData pointer to %p!", obj, obj->gameData );
-
-    //First, we delete the objects components
-    _gameDeleteObj( obj->components );
-
-    //We remove the object form the world list.
-    listRemoveByData( state.world.objs, it->data );
-
-    //And we remove the object from the list
-    it=listRemoveItem( delObjs, it );
-
-    //If it's an emitter, we remove it
-    if( obj->type==ENGOBJ_PAREMIT )
-    {
-      eoPsysFree( obj->emitter );
-    }
-
-    //Then we delete the object itself
-    free(obj);
-
-  }
-}
 
 void gameRun()
 {
@@ -187,14 +217,10 @@ void gameRun()
   //If we're not paused, we simulate the world
   if( !state.isPaused )
   {
-    //Game instance updates it's entities (the player figure or whatnot)
-/*    if( mod()->frameBegin )
-    {
-      mod()->frameBegin();
-
-      mod()->updatePlayerEntities();
-    }
-*/
+	  if( state.world.gameFrameStart )
+	  {
+		  state.world.gameFrameStart();
+	  }
     //For each object in list
     _gameRunObject(state.world.objs );
 
@@ -217,22 +243,13 @@ void gameRun()
 
 }
 
-
-void eoWorldClear()
+void eoRegisterSimFunc( void (*objSimFunc)(engObj_s*) )
 {
-
-  //Fre world object list
-  listItem* it = state.world.objs;
-  while( (it=it->next) )
-  {
-    eoObjDel( (engObj_s*)it->data );
-  }
-  _gameDeleteObj( state._deleteObjs );
-
-  //Set 0 so we can detect that it's freed.
-  state.world.objs = 0;
-  state.nextObj = 0;
-
+	state.world.objSimFunc = objSimFunc;
+}
+void eoRegisterStartFrameFunc( void (*startFrameFunc)(void) )
+{
+	state.world.gameFrameStart = startFrameFunc;
 }
 
 engObj_s* eoObjCreate(int type)
@@ -292,7 +309,7 @@ void eoObjBake(engObj_s* obj)
     //Check data
     if( obj->emitter && !obj->emitter->_maxParticles  )
     {
-      eoPrint("Object %i have no emitter, or emitter is not baked.", obj->id);
+      eoPrint("Object %i have no emitter, or it's emitter is not baked.", obj->id);
       return;
     }
 
@@ -367,6 +384,8 @@ void gameDraw(listItem* objList)
 {
   listItem* it=objList;
   engObj_s* obj;
+
+  if( !state.world.initialized ) return;
 
   while( (it=it->next) )
   {

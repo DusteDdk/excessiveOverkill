@@ -1,7 +1,7 @@
 /******************************************************************************
  * This file is part of ExcessiveOverkill.                                    *
  *                                                                            *
- * Copyright 2011 Jimmy Bøgh Christensen                                      *
+ * Copyright 2011 Jimmy Bï¿½gh Christensen                                      *
  *                                                                            *
  * ExcessiveOverkill is free software: you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by       *
@@ -253,9 +253,13 @@ typedef struct eoObj_struct {
   struct eoObj_struct* parent; //0 if this is the top
 } engObj_s;
 
+typedef void (*eoEngObjSimCallback)(engObj_s*);
 
 typedef struct {
   listItem* objs;
+  void (*objSimFunc)(engObj_s*);
+  void (*gameFrameStart)(void);
+  int initialized; //Is the gameworld ready to use?
 } world_s;
 
 /*******************************************************************************

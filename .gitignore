@@ -1,3 +1,4 @@
+*.o
 .objs/
 ExcessiveOverkill.layout
 ExcessiveOverkill.so

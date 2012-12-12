@@ -41,9 +41,11 @@ typedef struct {
 
 
 
-void gameInit();
+void eoGameInit();
 void eoWorldClear();
 
+void eoRegisterSimFunc( eoEngObjSimCallback );
+void eoRegisterStartFrameFunc( void (*startFrameFunc)(void) );
 
 engObj_s* eoObjCreate(int type);
 void eoObjBake(engObj_s* obj);

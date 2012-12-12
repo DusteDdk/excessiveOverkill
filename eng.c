@@ -206,7 +206,7 @@ int eoInitAll(int argc, char** argv, const char* datadir)
     psysInit();
     eoPrint("Particle systems initialized.");
 
-    gameInit();
+    eoGameInit();
     eoPrint("Game world initialized.");
 
     engVarDone=0;
