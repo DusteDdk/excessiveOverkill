@@ -6,7 +6,7 @@ NAME=ExcessiveOverkill.dll
 TARGET= $(NAME)
 
 INCS =  -I. -I./3rd -I/usr/i586-mingw32msvc/include/
-CFLAGS = -shared -fPIC
+CFLAGS = -shared
 LDFLAGS=$(CFLAGS) 
 LIBS = -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lopengl32 -lglu32
 
