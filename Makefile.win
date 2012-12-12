@@ -5,16 +5,16 @@ STRIP = i586-mingw32msvc-strip
 NAME=ExcessiveOverkill.dll
 TARGET= $(NAME)
 
-INCS =  -I. -I./3rd -I/usr/include -I/usr/include/SDL
+INCS =  -I. -I./3rd -I/usr/i586-mingw32msvc/include/
 CFLAGS = -shared -fPIC
 LDFLAGS=$(CFLAGS) 
-LIBS = -lmingw32 -SDLmain -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lpng -lm -lz -lpthread -lopengl32
+LIBS = -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lopengl32 -lglu32
 
 DEFS = -DWIN32 -DWIN32_CROSS
 
 OBJS = camera.o console.o data.o eng.o game.o gfxeng.o gltxt.o\
 gui.o gui-test.o input.o list.o particles.o screenshot.o sound.o\
-sprite.o strings.o tick.o vboload.o 3rd/glew.o
+sprite.o strings.o tick.o vboload.o 3rd/eo_glew.o 3rd/winvasp.o
 
 ########################################################################
 

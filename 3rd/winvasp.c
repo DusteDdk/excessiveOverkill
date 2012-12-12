@@ -1,26 +1,9 @@
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <ansidecl.h>
-#ifdef ANSI_PROTOTYPES
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#else
-extern unsigned long strtoul ();
-extern PTR malloc ();
-#endif
 
 #include "winvasp.h"
-
-static int int_vasprintf PARAMS ((char **, const char *, va_list *));
 
 static int
 int_vasprintf (result, format, args)
@@ -34,7 +17,7 @@ int_vasprintf (result, format, args)
   int total_width = strlen (format) + 1;
   va_list ap;
 
-  memcpy ((PTR) &ap, (PTR) args, sizeof (va_list));
+  memcpy ( &ap, args, sizeof (va_list));
 
   while (*p != '\0')
     {

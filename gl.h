@@ -28,7 +28,7 @@
 #endif
 
 
-#include "3rd/glew.h"
+#include "3rd/eo_glew.h"
 
 #include <GL/glext.h>
 
