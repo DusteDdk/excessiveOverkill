@@ -700,11 +700,9 @@ void guiInit()
 
   gui.renderTex = eoGfxFboCreate(eoSetting()->res.x,eoSetting()->res.y);
 
-  eoVarAdd( CON_TYPE_INT,0, &gui.useIdColor, "gui_idcol" );
-  eoVarAdd( CON_TYPE_INT,0, &gui.showIdTex, "gui_showidtex" );
-
-  //Hook the gui Test function
-  eoFuncAdd( &guiTestConToggle, NULL, "gui_test" );
+  eoVarAdd( CON_TYPE_INT,0, &gui.useIdColor, "gui-idcol" );
+  eoVarAdd( CON_TYPE_INT,0, &gui.showIdTex, "gui-showidtex" );
+  eoFuncAdd( &guiTestConToggle, NULL, "gui-test" );
 
   gui.isHooked=FALSE;
   eoGuiShowCursor(1);
