@@ -40,6 +40,7 @@ void eoGfxFboRenderBegin( renderTex_t* rt ); //Binds an fbo
 void eoGfxFboRenderEnd(); //Unbinds
 
 void eoGfxBillboardBegin();
+void eoGfxBillboard_AxisOnlyBegin(int_fast8_t ax);
 void eoGfxBillBoardEnd();
 
 GLfloat eoRandFloat( GLfloat max );

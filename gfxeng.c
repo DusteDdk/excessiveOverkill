@@ -455,13 +455,78 @@ void eoGfxBillboardBegin()
 
 	// undo all rotations
 	// beware all scaling is lost as well
+
+ /* printf("--start--\n");
 	for( i=0; i<3; i++ )
 	    for( j=0; j<3; j++ ) {
 		if ( i==j )
+    {
+//        printf("modelview[%i] = 1.0;\n", i*4+j);
 		    modelview[i*4+j] = 1.0;
+    }
 		else
+    {
+//        printf("modelview[%i] = 0.0;\n", i*4+j);
 		    modelview[i*4+j] = 0.0;
+    }
 	    }
+  printf("--stop--\n");*/
+  //Unrolled modelview assignment loop above
+
+  // X
+  modelview[0] = 1.0;
+  modelview[1] = 0.0;
+  modelview[2] = 0.0;
+
+  // Y
+  modelview[4] = 0.0;
+  modelview[5] = 1.0;
+  modelview[6] = 0.0;
+
+  // Z
+  modelview[8] = 0.0;
+  modelview[9] = 0.0;
+  modelview[10] = 1.0;
+
+	// set the modelview with no rotations
+	glLoadMatrixf(modelview);
+
+}
+
+void eoGfxBillboard_AxisOnlyBegin(int_fast8_t ax)
+{
+	GLfloat modelview[16];
+	int i,j;
+
+	// save the current modelview matrix
+	glPushMatrix();
+
+	// get the current modelview matrix
+	glGetFloatv(GL_MODELVIEW_MATRIX , modelview);
+
+  // X
+  if( ax & EO_BILL_LOCK_X )
+  {
+    modelview[0] = 1.0;
+    modelview[1] = 0.0;
+    modelview[2] = 0.0;
+  }
+
+  // Y
+  if( ax & EO_BILL_LOCK_Y )
+  {
+    modelview[4] = 0.0;
+    modelview[5] = 1.0;
+    modelview[6] = 0.0;
+  }
+
+  // Z
+  if( ax & EO_BILL_LOCK_Z )
+  {
+    modelview[8] = 0.0;
+    modelview[9] = 0.0;
+    modelview[10] = 1.0;
+  }
 
 	// set the modelview with no rotations
 	glLoadMatrixf(modelview);

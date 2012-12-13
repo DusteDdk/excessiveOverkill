@@ -433,6 +433,10 @@ typedef struct {
 /*******************************************************************************
   GFX engine structure
 *******************************************************************************/
+#define EO_BILL_LOCK_X (int_fast8_t)1
+#define EO_BILL_LOCK_Y (int_fast8_t)2
+#define EO_BILL_LOCK_Z (int_fast8_t)4
+
 typedef struct {
   GLuint fbo, tex;
   GLint w,h; //Viewport size in pixels

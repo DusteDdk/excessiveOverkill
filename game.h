@@ -63,6 +63,8 @@ void gamePlaySounds();
 int eoPauseGet();
 
 void eoPauseSet(int p);
+void eoRegisterSimFunc( void (*objSimFunc)(engObj_s*) );
+void eoRegisterStartFrameFunc( void (*startFrameFunc)(void) );
 
 /*
 #define GAME_TIMER_REPEAT
