@@ -55,7 +55,7 @@ static bool init=0;
 static GLuint consoleList;
 static int curLine=0;
 static bool showConsole=0;
-static GLfloat conBgColor[4] = { 0.5, 0.5, 1, 1 };
+static GLfloat conBgColor[4] = { 1.0, 1.0, 1.0, 0.95 };
 
 typedef struct {
   int type;
@@ -266,10 +266,12 @@ void consoleInit()
   consoleList = glGenLists(1);
   glNewList(consoleList, GL_COMPILE);
     glLoadIdentity();
+    glTranslatef(0, -eoSetting()->res.x+consoleHeight, 0 );
+
     glBindTexture(GL_TEXTURE_2D, eoGfxLoadTex( Data( "/data/gfx/", "conback.png" ) ) );
     glBegin(GL_QUADS);
-      glTexCoord2f(0,1); glVertex2f(0,consoleHeight);
-      glTexCoord2f(1,1); glVertex2f(eoSetting()->res.x, consoleHeight);
+      glTexCoord2f(0,1); glVertex2f(0,eoSetting()->res.x);
+      glTexCoord2f(1,1); glVertex2f(eoSetting()->res.x, eoSetting()->res.x);
       glTexCoord2f(1,0); glVertex2f(eoSetting()->res.x,0);
       glTexCoord2f(0,0); glVertex2f(0,0);
     glEnd();
