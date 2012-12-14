@@ -94,7 +94,7 @@ void _testInit()
 
   guiWindow_s* another = eoGuiAddWindow( test.contextA, 50,50, 500,265, "Another topwindow", BTN_SHOWCLOSE );
 
-  eoGuiAddImage( another, 0,0, Data("/data/gfx/", "bugs.spr") );
+//  eoGuiAddImage( another, 0,0, Data("/data/gfx/", "bugs.spr") );
 
   eoGuiAddLabel( another, 0,211, "Excessive overkill is excessive\nIt'd be surprising if it's bugfree!" );
 
@@ -132,7 +132,7 @@ void _testInit()
   animWin->showTitle = FALSE;
   eoGuiWinBgCol(animWin,0,0,0,0);
   eoGuiWinBorCol(animWin,0,0,0,0);
-  test.anim.img = eoGuiAddImage( animWin, 0,0, Data("/data/gfx/", "guianimtest.spr") );
+//  test.anim.img = eoGuiAddImage( animWin, 0,0, Data("/data/gfx/", "guianimtest.spr") );
 
   test.anim.btn = eoGuiAddButton( testWin, 170, 335, 60,30, "Stop!", &_testAnimate );
 
