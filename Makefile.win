@@ -2,7 +2,7 @@ CC = i586-mingw32msvc-gcc
 LD = $(CC)
 STRIP = i586-mingw32msvc-strip
 
-NAME=ExcessiveOverkill.dll
+NAME=libExcessiveOverkill_x86.dll
 TARGET= $(NAME)
 
 INCS =  -I. -I./3rd -I/usr/i586-mingw32msvc/include/
