@@ -211,16 +211,17 @@ void _gameRunCollisions()
 
 void gameRun()
 {
+
   if( !state.world.objs ) return;
 
+  if( state.world.gameFrameStart )
+  {
+	  state.world.gameFrameStart();
+  }
 
   //If we're not paused, we simulate the world
   if( !state.isPaused )
   {
-	  if( state.world.gameFrameStart )
-	  {
-		  state.world.gameFrameStart();
-	  }
     //For each object in list
     _gameRunObject(state.world.objs );
 

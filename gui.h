@@ -39,6 +39,7 @@ guiImage_s* eoGuiAddImage  (guiWindow_s* container, GLfloat posx, GLfloat posy, 
 guiTextBox_s* eoGuiAddTextBox(guiWindow_s* container, GLfloat posx, GLfloat posy, int numLines, int font, const char* text);
 
 void eoGuiShowCursor( int showCursor );
+void eoGuiSetCursor( sprite_s* spr, int pointX, int pointY ); //PointX/Y is offset from 0,0 in the img.
 
 void eoGuiContextSet( guiWindow_s* container );    //Set as the current active gui container
 void eoGuiContextDel( guiWindow_s* container);  //Free all elements in container correctly. Will also set internal activeContainer pointer to 0.

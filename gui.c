@@ -44,6 +44,7 @@ typedef struct {
   guiWindow_s* dragMe;//Window to be dragged, or NULL for no window.
   guiWindow_s* draggedParent; //To check we don't move outside it's parent window!
   sprite_s* cursor;
+  vec2 cursorOffset;
   vec2 cursorPos;
 
   renderTex_t* renderTex;
@@ -684,6 +685,8 @@ void guiInit()
   gui.cursor = eoSpriteNew( eoSpriteBaseLoad( Data("/data/gfx/", "cursor.spr") ), 1, 1 );
   gui.cursorPos.x = 0;
   gui.cursorPos.y = 0;
+  gui.cursorOffset.x = 0;
+  gui.cursorOffset.y = 0;
 
   //Hook toggleUi to esc key
   eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_DOWN|INPUT_FLAG_EXCLUSIVE, SDLK_ESCAPE, &_guiToggle );
@@ -901,7 +904,10 @@ void guiDraw()
       glColor4f( 1,1,1,1 );
       glPushMatrix();
       glLoadIdentity();
-      spriteDraw2D( gui.cursor, gui.cursorPos );
+      vec2 curPos;
+      curPos.x = gui.cursorPos.x + gui.cursorOffset.x;
+      curPos.y = gui.cursorPos.y + gui.cursorOffset.y;
+      spriteDraw2D( gui.cursor, curPos );
       glPopMatrix();
     }
 
@@ -970,6 +976,14 @@ void eoGuiShowCursor( int showCursor )
     }
   }
 }
+
+void eoGuiSetCursor( sprite_s* spr, int pointX, int pointY )
+{
+	gui.cursorOffset.x = pointX;
+	gui.cursorOffset.y = pointY;
+	gui.cursor = spr;
+}
+
 
 guiWindow_s* eoGuiContextGet()
 {
