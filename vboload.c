@@ -493,8 +493,8 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
   }
   fclose( file );
   //3 glfloats pr face
-  model->vertexCount = numFaces*3; //A face is always a triangle, which have 3 verts
-  model->vertexDataSize = model->vertexCount*sizeof(vData);
+  model->tris = numFaces*3; //A face is always a triangle, which have 3 verts
+  model->vertexDataSize = model->tris*sizeof(vData);
 
   //Sort faces after material used
   qsort( faceData, numFaces, sizeof(objFace), compMat );
@@ -567,6 +567,7 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
 
     //This way we always set stop index correctly.
     model->materials[cMtl].count = count;
+    model->tris = index; //For clay render
   }
 
   //Calculate size
@@ -600,7 +601,7 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
   //Loaded model overview for debug
   eoPrint("  Model Overview (%s):", model->name);
   eoPrint("   VBO buffer name: %i", model->bufferName);
-  eoPrint("   %i verticies.", model->vertexCount);
+  eoPrint("   %i triangles.", model->tris );
   eoPrint("   %i materials.", model->matCount);
   eoPrint("   %i KiB.", model->vertexDataSize/1024);
 
@@ -634,6 +635,8 @@ void drawModel( vboModel* model )
   {
     glDisable( GL_LIGHTING );
     glColor4f(1,1,1,1);
+  } else {
+	glEnable( GL_LIGHTING );
   }
 
   //Draw geometry.
@@ -665,6 +668,32 @@ void drawModel( vboModel* model )
 
   glActiveTexture( GL_TEXTURE0 );
 }
+
+void drawClayModel( vboModel* model, GLubyte c[3] )
+{
+
+    glDisable( GL_LIGHTING );
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable( GL_TEXTURE_2D );
+    //Bind buffers
+    glBindBuffer(GL_ARRAY_BUFFER, model->bufferName);
+
+    //Verties first in array
+    glVertexPointer( 3, GL_FLOAT,sizeof(vData)  , 0 );
+    //Normals position
+    glNormalPointer(GL_FLOAT, sizeof(vData), (GLvoid*)(sizeof(GLfloat)*3)  );
+    //Texcoords position
+    glTexCoordPointer( 2, GL_FLOAT, sizeof(vData), (GLvoid*)(sizeof(GLfloat)*6) );
+
+    //set Clay color
+    glColor4ub( c[0],c[1],c[2],255 );
+
+    //Draw geometry.
+	glDrawArrays( model->drawType, 0, model->tris);
+
+}
+
 
 //Takes care of //freeing resources allocated to model (memory for struct, texture, buffers)
 void eoModelFree( vboModel* model )

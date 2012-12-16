@@ -103,6 +103,7 @@ typedef struct {
   char* name;
   GLuint bufferName;
   GLuint vaoName;
+  GLuint tris; //Number of triangles
   GLenum drawType; //Triangles, points, so on
 
   char* textureName; //Just because I can..
@@ -112,7 +113,6 @@ typedef struct {
 
   int matCount;         //Number of materials (thus, chunks to render, and displaylists)
   GLsizei vertexDataSize;
-  GLsizei vertexCount;
 
   vec3 size;
   int recieveLight;
@@ -248,6 +248,8 @@ typedef struct eoObj_struct {
 
   void (*thinkFunc)(struct eoObj_struct*);
   void (*colFunc)(struct eoObj_struct*,struct eoObj_struct*);
+  void (*clickedFunc)(struct eoObj_struct*, int mouseBtnState); //If needed, set before baking (0=nothign, 1=down, 2=up);
+  GLubyte _idcol[3];
 
   listItem* components; //Any attached engine objects
   struct eoObj_struct* parent; //0 if this is the top

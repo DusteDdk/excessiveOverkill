@@ -123,6 +123,7 @@ void _guiAddElement( guiWindow_s* dest, int type, void* data )
 guiWindow_s* eoGuiContextCreate()
 {
   guiWindow_s* w = malloc( sizeof(guiWindow_s) );
+  memset( w, 0, sizeof(guiWindow_s) );
   w->pos.x = 0;
   w->pos.y = 0;
   w->_size.x = (int)eoSetting()->res.x;
@@ -137,7 +138,6 @@ guiWindow_s* eoGuiContextCreate()
   w->callbackOnClose = 0;
   w->_packed = 0;
   w->elements = initList();
-
   return( w );
 }
 
@@ -542,8 +542,8 @@ void _guiFindClickedElement( SDL_MouseButtonEvent* btnEvent )
   {
 
     //We draw not to the screen, but to oour texture
-    glClearColor(0,0,0,0);
     eoGfxFboRenderBegin( gui.renderTex );
+    eoGfxFboClearTex();
 
     //Tell all drawingcode to draw ID color blocks instead of actual ui
     gui.useIdColor=1;
@@ -824,6 +824,7 @@ void _guiDrawElements( listItem* l, GLfloat ofx, GLfloat ofy )
       break;
       case GUI_TYPE_TEXTBOX:
         _guiDrawTxtBox( (guiTextBox_s*)e->data, ofx,ofy );
+      break;
       case GUI_TYPE_WINDOW:
         _guiDrawWin( (guiWindow_s*)e->data, ofx,ofy );
       break;

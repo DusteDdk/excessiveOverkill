@@ -43,4 +43,7 @@ int getMaterialIndex(vboModel* model, char* name);
 //Draws object geometry
 void drawModel( vboModel* model );
 
+//Draws object but in clay without light, env or tex
+void drawClayModel( vboModel* model, GLubyte c[3] );
+
 #endif // VBOLOAD_H_INCLUDED

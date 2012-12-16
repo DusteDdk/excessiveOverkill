@@ -38,6 +38,7 @@ renderTex_t* eoGfxFboCreate(int width, int height);
 void eoGfxFboDel( renderTex_t* rt ); //Frees FBO and texture.
 void eoGfxFboRenderBegin( renderTex_t* rt ); //Binds an fbo
 void eoGfxFboRenderEnd(); //Unbinds
+void eoGfxFboClearTex(); //clears the texture color
 
 void eoGfxBillboardBegin();
 void eoGfxBillboard_AxisOnlyBegin(int_fast8_t ax);

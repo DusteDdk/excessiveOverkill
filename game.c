@@ -21,7 +21,13 @@
 #include "console.h"
 #include "input.h"
 
+static GLubyte idCols[4];
+renderTex_t* gObjectSelectionTex;
+
 static gameState_s state;
+static int mouseLastX=0;
+static int mouseLastY=0;
+static int mouseDown=0;
 
 void _gameTogglePause( inputEvent* e )
 {
@@ -42,6 +48,17 @@ void eoPauseSet(int p)
   state.isPaused = p;
 }
 
+void _mouseEvent( inputEvent* e )
+{
+	if( e->mouse->type == INPUT_EVENT_TYPE_BUTTON)
+	{
+		mouseDown  = (e->mouse->button.state==SDL_PRESSED)?1:-1;
+	} else {
+		mouseLastX = e->mouse->motion.x;
+		mouseLastY = e->mouse->motion.y;
+	}
+}
+
 
 void eoGameInit()
 {
@@ -58,6 +75,13 @@ void eoGameInit()
   state.world.gameFrameStart = NULL;
   state.world.objSimFunc = NULL;
   state.world.initialized = 1;
+  memset( idCols, 0, sizeof(GLubyte)*3);
+
+  //Create a drawTexture
+  gObjectSelectionTex = eoGfxFboCreate(eoSetting()->res.x,eoSetting()->res.y);
+
+  //Add mouse hook
+  eoInpAddHook( INPUT_EVENT_MOUSE, INPUT_FLAG_MOVEMENT|INPUT_FLAG_DOWN|INPUT_FLAG_UP, 0, _mouseEvent );
 
 }
 
@@ -116,6 +140,13 @@ void eoWorldClear()
   state.nextObj = 0;
   state.world.initialized = 0;
 
+  //Free the drawTexture
+  eoGfxFboDel( gObjectSelectionTex );
+
+  //remove mouse hook
+  eoInpRemHook( INPUT_EVENT_MOUSE, 0, _mouseEvent );
+
+
 }
 
 void _gameRunObject(listItem* objList)
@@ -132,7 +163,7 @@ void _gameRunObject(listItem* objList)
       if(obj->thinkFunc)
         obj->thinkFunc(obj);
 
-	  //If the clientcode wants to be called with every object.
+	  //If the client code wants to be called with every object.
       if( state.world.objSimFunc )
       	state.world.objSimFunc(obj);
 
@@ -239,6 +270,31 @@ void gameRun()
 
   //Draw objects
   gameDraw(state.world.objs);
+
+  //Find any elements with mouse over them
+  GLubyte pix[3];
+  eoGfxFboRenderBegin( gObjectSelectionTex );
+  glReadPixels( mouseLastX, eoSetting()->res.y-mouseLastY,1,1,GL_RGB, GL_UNSIGNED_BYTE, &pix);
+  eoGfxFboClearTex();
+  eoGfxFboRenderEnd();
+
+  //Find obj same color as pix
+  listItem* it=state.world.objs;
+  engObj_s* obj;
+	while( (it=it->next) )
+	{
+		obj = (engObj_s*)it->data;
+		if( obj->clickedFunc )
+		{
+			if ( memcmp( pix, obj->_idcol, sizeof(GLubyte)*3 ) == 0 )
+			{
+				obj->clickedFunc( obj, mouseDown );
+				break; //break the while loop, we can only hit one
+			}
+		}
+	}
+
+	mouseDown=0;
   //Draw particle systems
   psysDraw();
 
@@ -271,7 +327,7 @@ void eoObjBake(engObj_s* obj)
 {
   if( obj->_baked )
   {
-    eoPrint("Object %i allready baked.", obj->id);
+    eoPrint("Object %i already baked.", obj->id);
     return;
   }
 
@@ -283,6 +339,33 @@ void eoObjBake(engObj_s* obj)
     {
       //Set hitbox
       obj->_hitBox = obj->model->size;
+
+      //Set "onclick" callback if any.
+      if( obj->clickedFunc )
+      {
+		  //Todo: it's easily possible to get many more colors
+    	  idCols[0] += 10;
+    	  if( idCols[0] > 240)
+    	  {
+    		  idCols[1] += 10;
+    		  if( idCols[1] > 240 )
+    		  {
+    			  idCols[2] += 10;
+    			  if( idCols[2] > 240 )
+    			  {
+    				  eoPrint("Error: No free IdColors for object %i unsetting clickFunc.", obj->id );
+    				  obj->clickedFunc=NULL;
+    			  }
+    		  }
+    	  }
+    	  if( obj->clickedFunc )
+    	  {
+    		  obj->_idcol[0]=idCols[0];
+    		  obj->_idcol[1]=idCols[1];
+    		  obj->_idcol[2]=idCols[2];
+    	  }
+      } //clickedFunc set
+
     } else {
       eoPrint("Object %i have no model, not baking.", obj->id );
       return;
@@ -400,7 +483,6 @@ void gameDraw(listItem* objList)
     glRotatef( obj->rot.y, 0,1,0 );
     glRotatef( obj->rot.z, 0,0,1 );
 
-
     //Draw hitbox
     if( state.drawHitbox )
     {
@@ -448,11 +530,22 @@ void gameDraw(listItem* objList)
       glEnable( GL_LIGHTING );
     }
 
-
+    GLubyte black[3];
+    black[0]=0;
+    black[1]=0;
+    black[2]=0;
     switch(obj->type)
     {
       case ENGOBJ_MODEL:
-        drawModel( obj->model );
+    	    eoGfxFboRenderBegin( gObjectSelectionTex );
+    	    if( obj->clickedFunc )
+    	    	drawClayModel( obj->model, obj->_idcol );
+    	    //else
+    	    //	drawClayModel( obj->model, black ); //to potentially block.
+
+    	    eoGfxFboRenderEnd();
+
+    	  drawModel(obj->model);
       break;
 
       case ENGOBJ_SPRITE:

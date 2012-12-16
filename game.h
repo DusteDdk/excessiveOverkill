@@ -47,6 +47,7 @@ void eoWorldClear();
 void eoRegisterSimFunc( eoEngObjSimCallback );
 void eoRegisterStartFrameFunc( void (*startFrameFunc)(void) );
 
+engObj_s* eoEngFind2dObj( vec2 p );
 engObj_s* eoObjCreate(int type);
 void eoObjBake(engObj_s* obj);
 void eoObjAdd(engObj_s* obj);

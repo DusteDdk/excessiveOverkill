@@ -390,7 +390,12 @@ void eoGfxFboRenderBegin( renderTex_t* rt )
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, rt->fbo);
   glPushAttrib(GL_VIEWPORT_BIT);
   glViewport(0,0,rt->w,rt->h);
-  glClear( GL_COLOR_BUFFER_BIT );
+}
+
+void eoGfxFboClearTex()
+{
+    glClearColor(0,0,0,0);
+    glClear( GL_COLOR_BUFFER_BIT );
 }
 
 void eoGfxFboRenderEnd()
@@ -445,7 +450,7 @@ int eoBestPOT( int i )
 void eoGfxBillboardBegin()
 {
 	GLfloat modelview[16];
-	int i,j;
+	//int i,j;
 
 	// save the current modelview matrix
 	glPushMatrix();
@@ -496,7 +501,6 @@ void eoGfxBillboardBegin()
 void eoGfxBillboard_AxisOnlyBegin(int_fast8_t ax)
 {
 	GLfloat modelview[16];
-	int i,j;
 
 	// save the current modelview matrix
 	glPushMatrix();
