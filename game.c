@@ -185,6 +185,7 @@ void _gameRunObject(listItem* objList)
 int _gameBoxCollision(engObj_s* a, engObj_s* b)
 {
   GLfloat aleft, aright, atop, abot, bleft,bright,btop,bbot;
+  GLfloat afront, aback, bfront, bback;
 
   aleft = a->pos.x-a->_hitBox.x;
   aright= a->pos.x+a->_hitBox.x;
@@ -197,6 +198,15 @@ int _gameBoxCollision(engObj_s* a, engObj_s* b)
 
   btop = b->pos.z-b->_hitBox.z;
   bbot = b->pos.z+b->_hitBox.z;
+
+  afront = a->pos.y+a->_hitBox.y;
+  aback = a->pos.y-a->_hitBox.y;
+
+  bfront = b->pos.y+b->_hitBox.y;
+  bback = b->pos.y-b->_hitBox.y;
+
+  if( afront < bback ) return(0);
+  if( aback > bfront ) return(0);
 
   if( abot < btop ) return(0);
   if( atop > bbot ) return(0);
@@ -396,6 +406,9 @@ void eoObjBake(engObj_s* obj)
       eoPrint("Object %i have no emitter, or it's emitter is not baked.", obj->id);
       return;
     }
+		obj->_hitBox.x = 0.1;
+		obj->_hitBox.y = 0.1;
+		obj->_hitBox.z = 0.1;
 
     break;
 

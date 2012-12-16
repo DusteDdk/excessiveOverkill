@@ -60,6 +60,7 @@ typedef struct {
   GLfloat fadeCol[4];
   GLuint _guiDrawStartList;
 } gui_s;
+
 static gui_s gui;
 
 static guiWindow_s* activeContext;
@@ -664,7 +665,7 @@ void _guiToggle( inputEvent* e )
 
 void guiInit()
 {
-
+  memset( &gui, 0x00, sizeof( gui_s ) );
   gui._guiDrawStartList = glGenLists(1);
 
   glNewList( gui._guiDrawStartList, GL_COMPILE );
@@ -935,19 +936,20 @@ void guiDraw()
         gui.fadeCol[3] = 1.0-(gui.fadeTimeLeft/gui.fadeTime);
 
       gui.fadeTimeLeft -= (GLfloat)eoTicks();
-      if( gui.fadeTimeLeft < 1 )
+      if( gui.fadeTimeLeft < 1.0 )
       {
         gui.fadeState = GUI_FADE_DONE;
         if( gui.fadeCallback )
           gui.fadeCallback( gui.fadeCallbackData);
       }
+
+      if( gui.fadeCol[3] != 0 )
+      {
+        glColor4fv( gui.fadeCol );
+        _guiBox(0,0,eoSetting()->res.x, eoSetting()->res.y);
+      }
     }
 
-    if( gui.fadeCol[3] != 0 )
-    {
-      glColor4fv( gui.fadeCol );
-      _guiBox(0,0,eoSetting()->res.x, eoSetting()->res.y);
-    }
 
   }
   //Show console on top of everything?
