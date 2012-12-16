@@ -406,9 +406,9 @@ void eoObjBake(engObj_s* obj)
       eoPrint("Object %i have no emitter, or it's emitter is not baked.", obj->id);
       return;
     }
-		obj->_hitBox.x = 0.1;
-		obj->_hitBox.y = 0.1;
-		obj->_hitBox.z = 0.1;
+		obj->_hitBox.x = 0.5;
+		obj->_hitBox.y = 0.5;
+		obj->_hitBox.z = 0.5;
 
     break;
 

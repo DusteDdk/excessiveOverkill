@@ -43,7 +43,7 @@ void gfxEngInit()
   glewInit();
   initGL();
   initEnvMap(GL_TEXTURE1, "/data/maps/smoke/");
-  initEnvMap(GL_TEXTURE2, "/data/maps/scenery1/");
+ // initEnvMap(GL_TEXTURE2, "/data/maps/scenery1/");
   gltxtInit(eoSetting()->res.y);
   //Init the console
   consoleInit();

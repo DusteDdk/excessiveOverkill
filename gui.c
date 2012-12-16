@@ -690,7 +690,7 @@ void guiInit()
   gui.cursorOffset.y = 0;
 
   //Hook toggleUi to esc key
-  eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_DOWN|INPUT_FLAG_EXCLUSIVE, SDLK_ESCAPE, &_guiToggle );
+  //eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_DOWN|INPUT_FLAG_EXCLUSIVE, SDLK_ESCAPE, &_guiToggle );
 
   gui.mBtnDown = FALSE;
   gui.mDragOffset.x = 0;
