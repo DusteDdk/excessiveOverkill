@@ -394,7 +394,7 @@ void eoGfxFboRenderBegin( renderTex_t* rt )
 
 void eoGfxFboClearTex()
 {
-    glClearColor(0,0,0,0);
+    glClearColor(0,0,0,1);
     glClear( GL_COLOR_BUFFER_BIT );
 }
 

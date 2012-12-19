@@ -28,6 +28,9 @@ static gameState_s state;
 static int mouseLastX=0;
 static int mouseLastY=0;
 static int mouseDown=0;
+static int findObjsByMouse=0;
+static int showFboTex=0;
+static GLfloat showFboTexAlpha=0.5;
 
 void _gameTogglePause( inputEvent* e )
 {
@@ -57,6 +60,7 @@ void _mouseEvent( inputEvent* e )
 		mouseLastX = e->mouse->motion.x;
 		mouseLastY = e->mouse->motion.y;
 	}
+  findObjsByMouse=1;
 }
 
 
@@ -69,6 +73,8 @@ void eoGameInit()
 
   eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_DOWN, SDLK_PAUSE, &_gameTogglePause );
   eoVarAdd( CON_TYPE_INT, 0, &state.drawHitbox, "hitbox" );
+  eoVarAdd( CON_TYPE_INT, 0, &showFboTex, "gcid" );
+  eoVarAdd( CON_TYPE_FLOAT, 0, &showFboTexAlpha, "gcidalpha" );
 
   state.world.objs = initList();
   state._deleteObjs = initList();
@@ -82,7 +88,6 @@ void eoGameInit()
 
   //Add mouse hook
   eoInpAddHook( INPUT_EVENT_MOUSE, INPUT_FLAG_MOVEMENT|INPUT_FLAG_DOWN|INPUT_FLAG_UP, 0, _mouseEvent );
-
 }
 
 void _gameDeleteObj( listItem* delObjs)
@@ -281,30 +286,68 @@ void gameRun()
   //Draw objects
   gameDraw(state.world.objs);
 
-  //Find any elements with mouse over them
-  GLubyte pix[3];
-  eoGfxFboRenderBegin( gObjectSelectionTex );
-  glReadPixels( mouseLastX, eoSetting()->res.y-mouseLastY,1,1,GL_RGB, GL_UNSIGNED_BYTE, &pix);
-  eoGfxFboClearTex();
-  eoGfxFboRenderEnd();
 
-  //Find obj same color as pix
-  listItem* it=state.world.objs;
-  engObj_s* obj;
-	while( (it=it->next) )
-	{
-		obj = (engObj_s*)it->data;
-		if( obj->clickedFunc )
-		{
-			if ( memcmp( pix, obj->_idcol, sizeof(GLubyte)*3 ) == 0 )
-			{
-				obj->clickedFunc( obj, mouseDown );
-				break; //break the while loop, we can only hit one
-			}
-		}
-	}
 
-	mouseDown=0;
+  if( findObjsByMouse )
+  {
+    //Find any elements with mouse over them
+    GLubyte pix[3];
+    eoGfxFboRenderBegin( gObjectSelectionTex );
+    glReadPixels( mouseLastX, eoSetting()->res.y-mouseLastY,1,1,GL_RGB, GL_UNSIGNED_BYTE, &pix);
+
+    if( !showFboTex )
+      eoGfxFboClearTex();
+
+    eoGfxFboRenderEnd();
+
+    //Find obj same color as pix
+    listItem* it=state.world.objs;
+    engObj_s* obj;
+    while( (it=it->next) )
+    {
+      obj = (engObj_s*)it->data;
+      if( obj->clickedFunc )
+      {
+        if ( memcmp( pix, obj->_idcol, sizeof(GLubyte)*3 ) == 0 )
+        {
+          obj->clickedFunc( obj, mouseDown );
+          break; //break the while loop, we can only hit one
+        }
+      }
+    }
+  	mouseDown=0;
+    findObjsByMouse=0;
+  }
+
+  if( showFboTex )
+  {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho( 0, eoSetting()->res.x, eoSetting()->res.y, 0, 0,1);
+    glColor4f(1,1,1,1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable( GL_CULL_FACE );
+    glDisable(GL_LIGHTING);
+
+    glLoadIdentity();
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, gObjectSelectionTex->tex );
+    glColor4f( 1,1,1, showFboTexAlpha );
+    glBegin( GL_QUADS );
+      glTexCoord2f( 0,gObjectSelectionTex->t ); glVertex2f( 0,0 );
+      glTexCoord2f( gObjectSelectionTex->s, gObjectSelectionTex->t ); glVertex2f( eoSetting()->res.x,0 );
+      glTexCoord2f( gObjectSelectionTex->s, 0 ); glVertex2f( eoSetting()->res.x, eoSetting()->res.y );
+      glTexCoord2f( 0, 0 ); glVertex2f( 0, eoSetting()->res.y );
+    glEnd();
+
+    eoGfxFboRenderBegin( gObjectSelectionTex );
+    eoGfxFboClearTex();
+    eoGfxFboRenderEnd();
+  }
+
   //Draw particle systems
   psysDraw();
 
@@ -550,13 +593,12 @@ void gameDraw(listItem* objList)
     switch(obj->type)
     {
       case ENGOBJ_MODEL:
-    	    eoGfxFboRenderBegin( gObjectSelectionTex );
-    	    if( obj->clickedFunc )
+    	    if( obj->clickedFunc && findObjsByMouse )
+          {
+    	      eoGfxFboRenderBegin( gObjectSelectionTex );
     	    	drawClayModel( obj->model, obj->_idcol );
-    	    //else
-    	    //	drawClayModel( obj->model, black ); //to potentially block.
-
-    	    eoGfxFboRenderEnd();
+    	      eoGfxFboRenderEnd();
+          }
 
     	  drawModel(obj->model);
       break;
