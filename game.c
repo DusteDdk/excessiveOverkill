@@ -64,11 +64,7 @@ void _mouseEvent( inputEvent* e )
 		mouseLastX = e->mouse->motion.x;
 		mouseLastY = e->mouse->motion.y;
 	}
-  findObjsByMouse=1;
 
-  eoGfxFboRenderBegin( gObjectSelectionTex );
-  eoGfxFboClearTex();
-  eoGfxFboRenderEnd();
 }
 
 void eoDisableMouseSelection()
@@ -91,7 +87,7 @@ void eoGameEnableMouseSelection(GLfloat scale)
   }
 
   eoInpAddHook( INPUT_EVENT_MOUSE, INPUT_FLAG_MOVEMENT|INPUT_FLAG_DOWN|INPUT_FLAG_UP, 0, _mouseEvent );
-  findObjsByMouse=0;
+  findObjsByMouse=1;
   fboTexScale=scale;
   gObjectSelectionTex=eoGfxFboCreate( eoSetting()->res.x*scale, eoSetting()->res.y*scale );
 }
@@ -330,16 +326,11 @@ void gameRun()
     //Find any elements with mouse over them
     eoGfxFboRenderBegin( gObjectSelectionTex );
     glReadPixels( (mouseLastX)*fboTexScale, (eoSetting()->res.y-mouseLastY)*fboTexScale,1,1,GL_RGB, GL_UNSIGNED_BYTE, &pix);
-
     if( !showFboTex )
       eoGfxFboClearTex();
 
     eoGfxFboRenderEnd();
 
-  }
-
-  if( findObjsByMouse != -1  )
-  {
     //Find obj same color as pix
     listItem* it=state.world.objs;
     engObj_s* obj;
@@ -356,7 +347,6 @@ void gameRun()
       }
     }
   	mouseDown=0;
-    findObjsByMouse=0;
   }
 
   if( showFboTex )
@@ -388,6 +378,9 @@ void gameRun()
       glTexCoord2f( 0, 0 ); glVertex2f( 0, eoSetting()->res.y );
     glEnd();
 
+    eoGfxFboRenderBegin( gObjectSelectionTex );
+    eoGfxFboClearTex();
+    eoGfxFboRenderEnd();
   }
 
   //Draw particle systems
@@ -635,9 +628,8 @@ void gameDraw(listItem* objList)
     switch(obj->type)
     {
       case ENGOBJ_MODEL:
-    	    if( obj->clickedFunc && findObjsByMouse != -1 )
+    	    if( findObjsByMouse != -1 && obj->clickedFunc )
           {
-            findObjsByMouse=1;
     	      eoGfxFboRenderBegin( gObjectSelectionTex );
     	    	drawClayModel( obj->model, obj->_idcol );
     	      eoGfxFboRenderEnd();
