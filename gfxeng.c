@@ -63,7 +63,6 @@ void gfxEngInit()
   eoVarAdd(CON_TYPE_FLOAT,0, &camGet()->zoom, "camzoom");
   eoVarAdd(CON_TYPE_FLOAT,0, &camGet()->zNear, "camznear");
 
-
   eoVarAdd(CON_TYPE_INT, 0, &engShowTestBox, "testbox");
 
   eoFuncAdd( screenShotConsole, NULL, "screenshot" );
@@ -386,9 +385,9 @@ void engRender()
 
 void eoGfxFboRenderBegin( renderTex_t* rt )
 {
-  glPopAttrib();
+//  glPushAttrib( 0 );
+//  glPushAttrib(GL_VIEWPORT_BIT);
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, rt->fbo);
-  glPushAttrib(GL_VIEWPORT_BIT);
   glViewport(0,0,rt->w,rt->h);
 }
 
@@ -401,6 +400,8 @@ void eoGfxFboClearTex()
 void eoGfxFboRenderEnd()
 {
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+  glViewport(0,0,eoSetting()->res.x, eoSetting()->res.y);
+//  glPopAttrib();
 }
 
 

@@ -22,15 +22,17 @@
 #include "input.h"
 
 static GLubyte idCols[4];
-renderTex_t* gObjectSelectionTex;
+renderTex_t* gObjectSelectionTex=NULL;
 
 static gameState_s state;
 static int mouseLastX=0;
 static int mouseLastY=0;
 static int mouseDown=0;
-static int findObjsByMouse=0;
+static int findObjsByMouse=-1; // -1 = disabled 0 = enabled but don't draw right now, 1 = enabled, draw now
 static int showFboTex=0;
 static GLfloat showFboTexAlpha=0.5;
+static GLfloat fboTexScale=1.0;
+static GLubyte pix[3];
 
 void _gameTogglePause( inputEvent* e )
 {
@@ -53,6 +55,8 @@ void eoPauseSet(int p)
 
 void _mouseEvent( inputEvent* e )
 {
+  if( findObjsByMouse == -1 ) return;
+
 	if( e->mouse->type == INPUT_EVENT_TYPE_BUTTON)
 	{
 		mouseDown  = (e->mouse->button.state==SDL_PRESSED)?1:-1;
@@ -61,8 +65,43 @@ void _mouseEvent( inputEvent* e )
 		mouseLastY = e->mouse->motion.y;
 	}
   findObjsByMouse=1;
+
+  eoGfxFboRenderBegin( gObjectSelectionTex );
+  eoGfxFboClearTex();
+  eoGfxFboRenderEnd();
 }
 
+void eoDisableMouseSelection()
+{
+  findObjsByMouse=-1;
+  eoInpRemHook( INPUT_EVENT_MOUSE, 0, _mouseEvent );
+}
+
+//The scale of the texture to render to, decides quality of mouse picking, and performance.
+void eoGameEnableMouseSelection(GLfloat scale)
+{
+  if( gObjectSelectionTex )
+  {
+    eoGfxFboDel( gObjectSelectionTex );
+  }
+  if( scale > 1.0 )
+  {
+    eoPrint("eoGameEnableMouseSelection error: scale is (%f) should larger than 0 and no larger than 1", scale );
+    scale=1.0;
+  }
+
+  eoInpAddHook( INPUT_EVENT_MOUSE, INPUT_FLAG_MOVEMENT|INPUT_FLAG_DOWN|INPUT_FLAG_UP, 0, _mouseEvent );
+  findObjsByMouse=0;
+  fboTexScale=scale;
+  gObjectSelectionTex=eoGfxFboCreate( eoSetting()->res.x*scale, eoSetting()->res.y*scale );
+}
+
+int _setMouseSelectionScale( const char* arg, void* unused )
+{
+  GLfloat f = atof(arg);
+  eoGameEnableMouseSelection(f);
+  return( CON_CALLBACK_HIDE_RETURN_VALUE );
+}
 
 void eoGameInit()
 {
@@ -76,6 +115,8 @@ void eoGameInit()
   eoVarAdd( CON_TYPE_INT, 0, &showFboTex, "gcid" );
   eoVarAdd( CON_TYPE_FLOAT, 0, &showFboTexAlpha, "gcidalpha" );
 
+  eoFuncAdd( _setMouseSelectionScale, NULL, "setMouseSelectionScale" );
+
   state.world.objs = initList();
   state._deleteObjs = initList();
   state.world.gameFrameStart = NULL;
@@ -83,11 +124,7 @@ void eoGameInit()
   state.world.initialized = 1;
   memset( idCols, 0, sizeof(GLubyte)*3);
 
-  //Create a drawTexture
-  gObjectSelectionTex = eoGfxFboCreate(eoSetting()->res.x,eoSetting()->res.y);
-
   //Add mouse hook
-  eoInpAddHook( INPUT_EVENT_MOUSE, INPUT_FLAG_MOVEMENT|INPUT_FLAG_DOWN|INPUT_FLAG_UP, 0, _mouseEvent );
 }
 
 void _gameDeleteObj( listItem* delObjs)
@@ -288,18 +325,21 @@ void gameRun()
 
 
 
-  if( findObjsByMouse )
+  if( findObjsByMouse == 1 ) //If -1, it's disabled
   {
     //Find any elements with mouse over them
-    GLubyte pix[3];
     eoGfxFboRenderBegin( gObjectSelectionTex );
-    glReadPixels( mouseLastX, eoSetting()->res.y-mouseLastY,1,1,GL_RGB, GL_UNSIGNED_BYTE, &pix);
+    glReadPixels( (mouseLastX)*fboTexScale, (eoSetting()->res.y-mouseLastY)*fboTexScale,1,1,GL_RGB, GL_UNSIGNED_BYTE, &pix);
 
     if( !showFboTex )
       eoGfxFboClearTex();
 
     eoGfxFboRenderEnd();
 
+  }
+
+  if( findObjsByMouse != -1  )
+  {
     //Find obj same color as pix
     listItem* it=state.world.objs;
     engObj_s* obj;
@@ -322,6 +362,7 @@ void gameRun()
   if( showFboTex )
   {
     glMatrixMode(GL_PROJECTION);
+
     glLoadIdentity();
     glOrtho( 0, eoSetting()->res.x, eoSetting()->res.y, 0, 0,1);
     glColor4f(1,1,1,1);
@@ -343,9 +384,6 @@ void gameRun()
       glTexCoord2f( 0, 0 ); glVertex2f( 0, eoSetting()->res.y );
     glEnd();
 
-    eoGfxFboRenderBegin( gObjectSelectionTex );
-    eoGfxFboClearTex();
-    eoGfxFboRenderEnd();
   }
 
   //Draw particle systems

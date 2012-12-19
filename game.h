@@ -41,6 +41,8 @@ typedef struct {
 
 
 
+void eoGameEnableMouseSelection(GLfloat scale);
+void eoDisableMouseSelection();
 void eoGameInit();
 void eoWorldClear();
 
