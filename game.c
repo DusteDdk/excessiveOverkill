@@ -376,6 +376,10 @@ void gameRun()
     glLoadIdentity();
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, gObjectSelectionTex->tex );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glColor4f( 1,1,1, showFboTexAlpha );
     glBegin( GL_QUADS );
       glTexCoord2f( 0,gObjectSelectionTex->t ); glVertex2f( 0,0 );
@@ -631,8 +635,9 @@ void gameDraw(listItem* objList)
     switch(obj->type)
     {
       case ENGOBJ_MODEL:
-    	    if( obj->clickedFunc && findObjsByMouse )
+    	    if( obj->clickedFunc && findObjsByMouse != -1 )
           {
+            findObjsByMouse=1;
     	      eoGfxFboRenderBegin( gObjectSelectionTex );
     	    	drawClayModel( obj->model, obj->_idcol );
     	      eoGfxFboRenderEnd();
