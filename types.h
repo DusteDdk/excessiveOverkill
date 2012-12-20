@@ -35,7 +35,7 @@
 
 #define FALSE 0
 #define TRUE 1
-
+#define RADINDEG 57.2957795
 typedef int_fast8_t bool; //Don't really care about memory usage, just speed.
 typedef struct { GLfloat x,y,z; } vec3; //3D vector
 typedef struct { GLfloat x,y; } vec2;   //2D vector
@@ -115,6 +115,8 @@ typedef struct {
   GLsizei vertexDataSize;
 
   vec3 size;
+  vec3 centerOffset; //The "real" center of the model.
+
   int recieveLight;
 } vboModel;
 

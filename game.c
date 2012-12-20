@@ -17,6 +17,7 @@
  * along with ExcessiveOverkill.  If not, see <http://www.gnu.org/licenses/>. *
  ******************************************************************************/
 
+#include <math.h>
 #include "game.h"
 #include "console.h"
 #include "input.h"
@@ -198,14 +199,35 @@ void _gameRunObject(listItem* objList)
     //If we're the server, we do cool stuff
     if( state.isServer )
     {
+      //If it's a model, we will rotate it's hitbox
+      if( obj->type == ENGOBJ_MODEL && ( obj->colTeam || state.drawHitbox ) )
+      {
+        eoPrint("obj %i rotation: %f %f %f",obj->id, obj->rot.x, obj->rot.y, obj->rot.z );
+        //Rotate around x axis
+        obj->_hitBox.z = cos( obj->rot.x / RADINDEG ) * obj->model->size.z;
+        obj->_hitBox.y = sin( obj->rot.x / RADINDEG ) * obj->model->size.y;
+
+        //Rotate around y axis
+        obj->_hitBox.z = sin( obj->rot.y / RADINDEG ) * obj->model->size.z;
+        obj->_hitBox.x = cos( obj->rot.y / RADINDEG ) * obj->model->size.x;
+
+        //Rotate around z axis
+        obj->_hitBox.y = sin( obj->rot.z / RADINDEG ) * obj->model->size.y;
+        obj->_hitBox.x = cos( obj->rot.z / RADINDEG ) * obj->model->size.x;
+
+        //Translate the hitbox to match centeroffset
+        obj->_hitBox = eoVec3Add( obj->_hitBox, obj->model->centerOffset );
+      }
+
       if(obj->thinkFunc)
         obj->thinkFunc(obj);
 
-	  //If the client code wants to be called with every object.
-      if( state.world.objSimFunc )
-      	state.world.objSimFunc(obj);
-
     }
+
+	  //If the client code wants to be called with every object.
+	  //This is called even if we are not the server, client should make the distinction
+    if( state.world.objSimFunc )
+      state.world.objSimFunc(obj);
 
     //Movement is simulated seperately so stuff keeps moving even if packages does not come every frame
     gameSimMovement(obj);
@@ -569,10 +591,9 @@ void gameDraw(listItem* objList)
     gameDraw( obj->components );
 
     glPushMatrix();
+
+    //We translate here so the hitbox follows but we don't rotate since collision detection code will rotate the hitbox.
     glTranslatef( obj->pos.x, obj->pos.y, obj->pos.z );
-    glRotatef( obj->rot.x, 1,0,0 );
-    glRotatef( obj->rot.y, 0,1,0 );
-    glRotatef( obj->rot.z, 0,0,1 );
 
     //Draw hitbox
     if( state.drawHitbox )
@@ -620,6 +641,12 @@ void gameDraw(listItem* objList)
       glDisable(GL_COLOR_MATERIAL);
       glEnable( GL_LIGHTING );
     }
+
+    //We apply rotation here, that way, we can see if the hitboxes are rotated correctly.
+    glRotatef( obj->rot.x, 1,0,0 );
+    glRotatef( obj->rot.y, 0,1,0 );
+    glRotatef( obj->rot.z, 0,0,1 );
+
 
     GLubyte black[3];
     black[0]=0;

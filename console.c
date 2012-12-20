@@ -315,7 +315,7 @@ void eoPrint(const char* format, ...)
   }
 
   char* line = malloc( (strlen(buffer)+1+100)*sizeof(char) );
-  sprintf(line, "^4%i^0>^1 %s", curLine, buffer );
+  sprintf(line, "^4%4i^0>^1 %s", curLine, buffer );
   free(buffer);
   listAddData( con, (void*)line );
 

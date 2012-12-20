@@ -575,8 +575,10 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
   model->size.y = (fabs(ymin)+fabs(ymax))/2.0;
   model->size.z = (fabs(zmin)+fabs(zmax))/2.0;
 
-
-
+  //Calculate offset from origin
+  model->centerOffset.x = (xmax - xmin)/2.0;
+  model->centerOffset.y = (ymax - ymin)/2.0;
+  model->centerOffset.z = (zmax - zmin)/2.0;
 
   //Generate VBO
   glGenBuffers(1, &model->bufferName);
