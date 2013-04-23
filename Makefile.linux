@@ -16,7 +16,7 @@ sprite.o strings.o tick.o vboload.o 3rd/eo_glew.o
 
 ########################################################################
 
-release: CFLAGS += -O2 -DEO_RELEASE
+release: CFLAGS += -O3 -DEO_RELEASE
 release: $(TARGET)
 		$(STRIP) $(TARGET)
 
