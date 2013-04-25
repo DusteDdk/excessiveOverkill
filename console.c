@@ -302,6 +302,25 @@ void consoleInit()
       glTexCoord2f(0,0); glVertex2f(0,0);
     glEnd();
 
+    glDisable(GL_TEXTURE_2D);
+    glColor4f( 0,0,0.2, 0.6);
+    glBegin(GL_QUADS);
+      glVertex2f(0,eoSetting()->res.x);
+      glVertex2f(eoSetting()->res.x, eoSetting()->res.x);
+      glVertex2f(eoSetting()->res.x,eoSetting()->res.x-13);
+      glVertex2f(0,eoSetting()->res.x-13);
+    glEnd();
+
+    glBegin(GL_LINES);
+    glColor4f( 1,0,0, 0.4);
+    glVertex2f(0, eoSetting()->res.x);
+    glVertex2f(eoSetting()->res.x, eoSetting()->res.x);
+    glColor4f( 0,0,0, 0.6);
+    glVertex2f(0, eoSetting()->res.x-13);
+    glVertex2f(eoSetting()->res.x, eoSetting()->res.x-13);
+
+    glEnd();
+
   glEndList();
 
   command[0]=0;
