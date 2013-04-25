@@ -1,7 +1,7 @@
 /******************************************************************************
  * This file is part of ExcessiveOverkill.                                    *
  *                                                                            *
- * Copyright 2011 Jimmy Bøgh Christensen                                      *
+ * Copyright 2011 Jimmy B��gh Christensen                                      *
  *                                                                            *
  * ExcessiveOverkill is free software: you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by       *
@@ -262,7 +262,6 @@ int _conEcho( const char* arg, void* unused )
 int _conExecScript( const char* arg, void* unused )
 {
   FILE* scr = fopen( arg, "r" );
-  ssize_t bytesRead=0;
   size_t bufSize = 1023;
   char* buf = malloc(bufSize+1);
 
@@ -271,12 +270,11 @@ int _conExecScript( const char* arg, void* unused )
     eoPrint("exec: Could not open '%s'.", arg);
   } else {
     eoPrint("exec: Running commands from '%s' ...", arg);
-    while( (bytesRead =getline( &buf, &bufSize, scr ) ) != -1 )
+    while(fgets( buf, bufSize, scr) )
     {
-      if( bytesRead > 1 && bytesRead < 1023 && buf[0] != '#' )
+      stripNewLine(buf);
+      if( buf[0] != '#' && buf[0] != ' ' && buf[0] != 0 )
       {
-        //Cut trailing \n
-        buf[ strlen(buf)-1 ] = '\0';
         eoExec( buf );
       }
     }
