@@ -40,6 +40,19 @@ typedef struct {
   uint16_t key; //To detect if it's a single key since those need to be removed from keys list aswell.
 } delayedUnhookItem;
 
+typedef struct {
+    char* name;
+    char* descr;
+    inputCallback cb;
+    int flags;
+} bindableFunctionItem;
+
+typedef struct {
+    char* name;
+    SDLKey key;
+    inputCallback cb;
+} bindableKeyItem;
+
 int_fast8_t dispatchRunning;
 listItem* delayedUnhook; //Since items might be unhooked while dispatching events, to avoid currupting the current iterator
 
@@ -49,6 +62,9 @@ listItem* keysDown; //List of keys that are currently pressed down. (keySub_t)
 
 listItem* mouse; //For subscribers of mousemovement.
 listItem* stick; //For subscribers of joystickactions.
+
+listItem* bindableFunctions;
+listItem* bindableKeys;
 
 SDL_Joystick* joy[2];
 
@@ -63,13 +79,13 @@ int inputShowBinds(const char* str, void* data)
   {
     ks = (keySub_t*)itKs->data;
     if( ks->subscribers )
-      eoPrint("Key ^3%i^1 (^2 %c ^1) bound to ^2%i^1 function(s)",(int)ks->key.sym ,ks->key.sym , listSize( ks->subscribers ) );
+      eoPrint("Key ^3%i^1 (^2 %s ^1) bound to ^2%i^1 function(s)",(int)ks->key.sym ,SDL_GetKeyName(ks->key.sym), listSize( ks->subscribers ) );
     else
-      eoPrint("ERROR: key %i (%c) is in keySubs but have empty subscriber list.", (int)ks->key.sym,ks->key.sym  );
+      eoPrint("ERROR: key %i ( %s ) is in keySubs but have empty subscriber list.", (int)ks->key.sym, SDL_GetKeyName(ks->key.sym)  );
   }
   if( listSize( allKeySubs ) )
   {
-    eoPrint( "There are also ^2%i^1 functions that are bound to every key.", listSize( allKeySubs ) );
+    eoPrint( "There are also ^2%i^1 functions that are bound to all keys.", listSize( allKeySubs ) );
   }
 
   if( listSize( mouse ) )
@@ -85,6 +101,179 @@ int inputShowBinds(const char* str, void* data)
   return( CON_CALLBACK_HIDE_RETURN_VALUE );
 }
 
+int _inpListInFuncs(const char* str, void* data)
+{
+  char flagStr[32];
+  listItem* it = bindableFunctions;
+  bindableFunctionItem* t=NULL;
+  eoPrint("%i functions can be bound to input:", listSize(bindableFunctions));
+  while( (it=it->next) )
+  {
+    t=(bindableFunctionItem*)it->data;
+    flagStr[0] = '\0';
+    if( (t->flags&INPUT_FLAG_DOWN) )
+    {
+      sprintf( flagStr,"%s [down]", flagStr);
+    }
+    if( (t->flags&INPUT_FLAG_UP) )
+    {
+      sprintf( flagStr,"%s [up]", flagStr);
+    }
+    if( (t->flags&INPUT_FLAG_HOLD) )
+    {
+      sprintf( flagStr,"%s [hold]", flagStr);
+    }
+
+    eoPrint( "%s - (%s ) %s", t->name, flagStr, t->descr );
+  }
+
+  return(CON_CALLBACK_HIDE_RETURN_VALUE);
+}
+
+int _inpListInKeys(const char* str, void* data)
+{
+  listItem* it = bindableKeys;
+  bindableKeyItem* k=NULL;
+
+  eoPrint("%i bindable keys:", listSize(bindableKeys));
+  while( (it=it->next) )
+  {
+    k = (bindableKeyItem*)it->data;
+    eoPrint("%s", k->name );
+  }
+  return(CON_CALLBACK_HIDE_RETURN_VALUE);
+}
+
+int _inpBind(const char* str, void* data)
+{
+  bool found=0;
+  listItem* it;
+  bindableFunctionItem* fi;
+  bindableFunctionItem* fii;
+  bindableKeyItem* ki;
+
+  //Parse arguments
+  char keyName[128];
+  char funName[128];
+  splitVals( ' ', str, keyName, funName );
+
+  //Check that key exist
+  it=bindableKeys;
+  while( (it=it->next) )
+  {
+    ki = (bindableKeyItem*)it->data;
+    if( strcmp(ki->name, keyName ) == 0 )
+    {
+      found=1;
+      break;
+    }
+  }
+
+  if(!found)
+  {
+    eoPrint("The key '%s' is not a bindable key, type inkeys for a list of usable keys.");
+  } else {
+    it=bindableFunctions;
+    found=0;
+    while( (it=it->next) )
+    {
+      fi = (bindableFunctionItem*)it->data;
+      if( strcmp(fi->name, funName ) == 0 )
+      {
+        found=1;
+        break;
+      }
+    }
+
+    if(!found)
+    {
+      eoPrint("The function '%s' is not a bindable function, type infuncs for a list of usable functions.");
+    } else {
+
+      if( ki->cb )
+      {
+        //Find name of current callback
+        it=bindableFunctions;
+        while( (it=it->next) )
+        {
+          fii = (bindableFunctionItem*)it->data;
+
+          //Find the one we are bound to
+          if( fii->cb == ki->cb )
+          {
+
+            //Already the same function?
+            if( strcmp(fii->name, fi->name) == 0 )
+            {
+              eoPrint("Dude, %s is already bound to %s!", ki->name, fii->name);
+              found=0;
+            } else {
+              eoPrint("Currently bound to %s, unbinding %s.", fii->name,keyName);
+              eoInpRemHook( INPUT_EVENT_KEY, ki->key, ki->cb );
+            }
+            break;
+          }
+        }
+      }
+
+      if( found )
+      {
+        eoPrint("%s is now bound to %s", keyName, funName );
+        ki->cb=fi->cb;
+        eoInpAddHook( INPUT_EVENT_KEY, fi->flags, ki->key, fi->cb );
+      }
+
+    }
+
+  }
+
+
+  return(CON_CALLBACK_HIDE_RETURN_VALUE);
+}
+
+void eoInpAddFunc( const char* funcName, const char* funcDescr, inputCallback cb,int flags )
+{
+
+  if( !((flags&INPUT_FLAG_DOWN)||(flags&INPUT_FLAG_UP)||(flags&INPUT_FLAG_HOLD)) )
+  {
+    eoPrint("eoInpAddFunc( %s ) Error: One or more of INPUT_FLAG_[UP/DOWN/HOLD] required. Not added.", funcName);
+    return;
+  }
+
+  if( ((flags&INPUT_FLAG_MOVEMENT)||(flags&INPUT_FLAG_EXCLUSIVE)) )
+  {
+    eoPrint("eoInpAddFunc( %s ) Error: INPUT_FLAG_[EXCLUSIVE/MOVEMENT] not allowed. Not added.", funcName);
+    return;
+  }
+
+  bindableFunctionItem* t = malloc(sizeof(bindableFunctionItem));
+  t->cb=cb;
+  t->flags = flags;
+  t->name=malloc(strlen(funcName)+1);
+  strcpy( t->name, funcName );
+  t->descr = malloc(strlen(funcDescr)+1);
+  strcpy( t->descr, funcDescr);
+
+  listAddData(bindableFunctions, (void*)t);
+}
+
+void _addValidInputKey( const char* name, SDLKey key )
+{
+  bindableKeyItem* t = malloc(sizeof(bindableKeyItem));
+  t->key=key;
+  t->name = malloc( strlen(name)+1 );
+  t->cb=NULL;
+  strcpy( t->name, name );
+
+  listAddData(bindableKeys, (void*)t);
+}
+
+//Test-function to show how binding works.
+void _inputTestBindFunction( inputEvent* e )
+{
+  eoPrint("Got input event!");
+}
+
 void inputInit()
 {
   dispatchRunning = 0;
@@ -94,6 +283,9 @@ void inputInit()
   keysDown = initList();
   mouse = initList();
   stick = initList();
+  bindableFunctions = initList();
+  bindableKeys = initList();
+
   joy[0] = 0;
   joy[1] = 0;
 
@@ -122,6 +314,93 @@ void inputInit()
     eoPrint("Not using joysticks. (none found)");
   }
 
+  //Hook the infuncs (Lists functions that can be bound to a key)
+  eoFuncAdd( _inpListInFuncs,NULL, "infuncs" );
+
+  //Hook the inkeys (Lists the keys that can be bound to a function)
+  eoFuncAdd( _inpListInKeys,NULL, "inkeys" );
+
+  //Hook the bind function. (Binds a key to a function)
+  eoFuncAdd( _inpBind,NULL, "bind" );
+
+  //Add list of bindable keys
+  _addValidInputKey( "0", SDLK_0);
+  _addValidInputKey( "1", SDLK_1);
+  _addValidInputKey( "2", SDLK_2);
+  _addValidInputKey( "3", SDLK_3);
+  _addValidInputKey( "4", SDLK_4);
+  _addValidInputKey( "5", SDLK_5);
+  _addValidInputKey( "6", SDLK_6);
+  _addValidInputKey( "7", SDLK_7);
+  _addValidInputKey( "8", SDLK_8);
+  _addValidInputKey( "9", SDLK_9);
+
+  _addValidInputKey( "a", SDLK_a);
+  _addValidInputKey( "b", SDLK_b);
+  _addValidInputKey( "c", SDLK_c);
+  _addValidInputKey( "d", SDLK_d);
+  _addValidInputKey( "e", SDLK_e);
+  _addValidInputKey( "f", SDLK_f);
+  _addValidInputKey( "g", SDLK_g);
+  _addValidInputKey( "h", SDLK_h);
+  _addValidInputKey( "i", SDLK_i);
+  _addValidInputKey( "j", SDLK_j);
+  _addValidInputKey( "k", SDLK_k);
+  _addValidInputKey( "l", SDLK_l);
+  _addValidInputKey( "m", SDLK_m);
+  _addValidInputKey( "n", SDLK_n);
+  _addValidInputKey( "o", SDLK_o);
+  _addValidInputKey( "p", SDLK_p);
+  _addValidInputKey( "q", SDLK_q);
+  _addValidInputKey( "r", SDLK_r);
+  _addValidInputKey( "s", SDLK_s);
+  _addValidInputKey( "t", SDLK_t);
+  _addValidInputKey( "u", SDLK_u);
+  _addValidInputKey( "v", SDLK_v);
+  _addValidInputKey( "w", SDLK_w);
+  _addValidInputKey( "x", SDLK_x);
+  _addValidInputKey( "y", SDLK_y);
+  _addValidInputKey( "z", SDLK_z);
+  _addValidInputKey( "up", SDLK_UP);
+  _addValidInputKey( "down", SDLK_DOWN);
+  _addValidInputKey( "left", SDLK_LEFT);
+  _addValidInputKey( "right", SDLK_RIGHT);
+  _addValidInputKey( "lctrl", SDLK_LCTRL);
+  _addValidInputKey( "rctrl", SDLK_RCTRL);
+  _addValidInputKey( "alt", SDLK_LALT);
+  _addValidInputKey( "altgr", SDLK_RALT);
+  _addValidInputKey( "space", SDLK_SPACE);
+  _addValidInputKey( "shiftl", SDLK_LSHIFT);
+  _addValidInputKey( "shiftr", SDLK_RSHIFT);
+  _addValidInputKey( "backspace", SDLK_BACKSPACE);
+  _addValidInputKey( "return", SDLK_RETURN);
+  _addValidInputKey( "enter", SDLK_KP_ENTER);
+  _addValidInputKey( "insert", SDLK_INSERT);
+  _addValidInputKey( "home", SDLK_HOME);
+  _addValidInputKey( "pageup", SDLK_PAGEUP);
+  _addValidInputKey( "delete", SDLK_DELETE);
+  _addValidInputKey( "end", SDLK_END);
+  _addValidInputKey( "pagedown", SDLK_PAGEDOWN);
+  _addValidInputKey( "*", SDLK_ASTERISK);
+  _addValidInputKey( ",", SDLK_PERIOD);
+  _addValidInputKey( ".", SDLK_PERIOD);
+  _addValidInputKey( "f2", SDLK_F2);
+  _addValidInputKey( "f3", SDLK_F3);
+  _addValidInputKey( "f4", SDLK_F4);
+  _addValidInputKey( "f5", SDLK_F5);
+  _addValidInputKey( "f6", SDLK_F6);
+  _addValidInputKey( "f7", SDLK_F7);
+  _addValidInputKey( "f8", SDLK_F8);
+  _addValidInputKey( "f9", SDLK_F9);
+  _addValidInputKey( "f10", SDLK_F10);
+  _addValidInputKey( "f11", SDLK_F11);
+  _addValidInputKey( "f12", SDLK_F12);
+  _addValidInputKey( "pause", SDLK_PAUSE);
+
+  eoInpAddFunc("inptestfunup",   "This function gets called if a key is released.", _inputTestBindFunction, INPUT_FLAG_UP );
+  eoInpAddFunc("inptestfundown", "This function gets called if a key is pressed down.", _inputTestBindFunction, INPUT_FLAG_DOWN );
+  eoInpAddFunc("inptestfunboth", "This function gets called if a key is release or pressed.", _inputTestBindFunction, INPUT_FLAG_UP|INPUT_FLAG_DOWN );
+  eoInpAddFunc("inptestfunhold", "This function gets called continuously when a key is held down.", _inputTestBindFunction, INPUT_FLAG_HOLD );
 }
 
 int_fast8_t _checkExclusive(int flags, listItem* l)
@@ -308,8 +587,9 @@ void _inputRemoveSingleKeyCallback( uint16_t key, void(*callback)(inputEvent*) )
 {
   eventSubscriber_t* s;
   listItem* it;
+  listItem* iit;
   listItem* l;
-
+  //TODO: Broken removal stuff
   l = _getKeySubList( key, keySubs );
   it = l;
   if( l )
@@ -328,7 +608,7 @@ void _inputRemoveSingleKeyCallback( uint16_t key, void(*callback)(inputEvent*) )
         s = (eventSubscriber_t*)it->data;
         if(callback == s->callback )
         {
-          listRemoveItem( l, it );
+          it=listRemoveItem( l, it );
           _freeEventSubscriber( s );
           //Let's check if list is now empty
           if( !listSize( l ) )
@@ -337,12 +617,12 @@ void _inputRemoveSingleKeyCallback( uint16_t key, void(*callback)(inputEvent*) )
             freeList( l );
 
             //Remove that list from keySubs
-            it = keySubs;
-            while( (it=it->next) )
+            iit = keySubs;
+            while( (iit=iit->next) )
             {
-              if( it->data == (void*)l )
+              if( iit->data == (void*)l )
               {
-                listRemoveItem( keySubs, it );
+                iit=listRemoveItem( keySubs, iit );
               }
             }
           }

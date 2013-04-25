@@ -259,6 +259,34 @@ int _conEcho( const char* arg, void* unused )
   return(CON_CALLBACK_HIDE_RETURN_VALUE);
 }
 
+int _conExecScript( const char* arg, void* unused )
+{
+  FILE* scr = fopen( arg, "r" );
+  ssize_t bytesRead=0;
+  size_t bufSize = 1023;
+  char* buf = malloc(bufSize+1);
+
+  if( !scr )
+  {
+    eoPrint("exec: Could not open '%s'.", arg);
+  } else {
+    eoPrint("exec: Running commands from '%s' ...", arg);
+    while( (bytesRead =getline( &buf, &bufSize, scr ) ) != -1 )
+    {
+      if( bytesRead > 1 && bytesRead < 1023 && buf[0] != '#' )
+      {
+        //Cut trailing \n
+        buf[ strlen(buf)-1 ] = '\0';
+        eoExec( buf );
+      }
+    }
+    fclose(scr);
+  }
+
+  free(buf);
+  return(CON_CALLBACK_HIDE_RETURN_VALUE);
+}
+
 void consoleInit()
 {
   consoleHeight = eoTxtHeight(FONT_SYS) * (CONSOLE_LINES+1);
@@ -282,12 +310,15 @@ void consoleInit()
 
   //Hook console to F1 key.
   eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_DOWN|INPUT_FLAG_EXCLUSIVE, SDLK_F1, &_consoleToggle );
+
+  //Hook the echo function.
   eoFuncAdd( _conEcho,NULL, "echo" );
+
+  //Hook the exec function.
+  eoFuncAdd( _conExecScript, NULL, "exec" );
 
   eoPrint("GL Console initialized.",CONSOLE_LINES,eoTxtHeight(FONT_SYS));
 }
-
-
 
 void eoPrint(const char* format, ...)
 {
@@ -419,14 +450,8 @@ void eoExec( const char* str )
   splitVals( ' ', str,cmd,arg  );
   bool found=FALSE;
 
-//  for( cVar* cv=it->next->data; it=it->next; cv=(cVar*)it->data )
-//  listItem* it=cVs;
-//  while( (it=it->next) )
   {itBegin( cVar*, cv, cVs )
 
-
-
-  //  cVar* cv = (cVar*)it->data;
     if( strcmp( cv->name, cmd ) == 0 )
     {
       found=TRUE;

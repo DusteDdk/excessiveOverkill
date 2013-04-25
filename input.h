@@ -33,10 +33,9 @@ void inputJoyMove( SDL_JoyAxisEvent motion );
 void inputJoyButton( SDL_JoyButtonEvent button );
 int inputShowBinds(const char* str, void* data);
 
-/*void inputAddBindable( const char* funcName, void (*callback)(inputEvent*) );
-void inputBind(const char* str); //Bind key function
-void inputUnbind( const char* str); //Unbind bound functions from key
-void inputUnbindAll();*/
+
+//Add function as bindable to input system. (can be bound using console command bind, listed using infuncs).
+void eoInpAddFunc( const char* funcName, const char* funcDescr, inputCallback cb, int flag );
 
 void eoInpAddHook( int_fast8_t event, int flags, uint16_t key, inputCallback callback );
 void eoInpRemHook( int_fast8_t event, uint16_t key, void (*callback)(inputEvent*) );

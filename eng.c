@@ -169,7 +169,6 @@ int eoInitAll(int argc, char** argv, const char* datadir)
 
     eoSetting()->aspect = (float)eoSetting()->res.x/(float)eoSetting()->res.y;
 
-
     /// InitSDL --->
     //Init SDL
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
