@@ -126,7 +126,6 @@ typedef struct {
   GLsizei vertexDataSize;
 
   vec3 size;
-  int recieveLight;
 } vboModel;
 
 /*******************************************************************************
@@ -234,6 +233,9 @@ typedef struct {
 //typedef void (*engObjCallback_f)(engObj_s*);  //Called on each object if present
 //typedef void (*engObjColCallback_f)(engObj_s*, engObj_s*);  //Called upon collision with object if present. First argument is the object that was hit, the second the one it hit.
 
+#define EO_RENDER_FULL 0
+#define EO_RENDER_WIREFRAME 1
+#define EO_RENDER_CLAY 2
 
 typedef struct eoObj_struct {
 
@@ -242,6 +244,9 @@ typedef struct eoObj_struct {
   int type; //Sprite, Model, Particle Emitter or Sound clip
   int colTeam; //0 = no collision. >0 = collide with all on other team.
   int _baked; //0 = not yet baked
+  uint_fast8_t renderType;
+  int_fast8_t fullBright;
+  GLubyte solidColor[4];
   vec3 pos;
   vec3 vel;
   vec3 rot;
@@ -260,7 +265,7 @@ typedef struct eoObj_struct {
   void (*thinkFunc)(struct eoObj_struct*);
   void (*colFunc)(struct eoObj_struct*,struct eoObj_struct*);
   void (*clickedFunc)(struct eoObj_struct*, int mouseBtnState); //If needed, set before baking (0=nothign, 1=down, 2=up);
-  GLubyte _idcol[3];
+  GLubyte _idcol[4];
 
   listItem* components; //Any attached engine objects
   struct eoObj_struct* parent; //0 if this is the top

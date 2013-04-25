@@ -360,7 +360,7 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
   vboModel* model = malloc(sizeof(vboModel));
   model->texture = 0; //So we can check if there's any texture.
   model->drawType = GL_TRIANGLES; //Default draw mode for all objects
-  model->recieveLight = TRUE;
+
 
   //Rewind file ptr
   rewind(file);
@@ -613,7 +613,7 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
 }
 
 //
-void drawModel( vboModel* model )
+void drawModel( vboModel* model, int_fast8_t fullBright )
 {
   int cMat=0;
   //Set base texture for model
@@ -631,12 +631,12 @@ void drawModel( vboModel* model )
   //Texcoords position
   glTexCoordPointer( 2, GL_FLOAT, sizeof(vData), (GLvoid*)(sizeof(GLfloat)*6) );
   //Lights enabled?
-  if( !model->recieveLight )
+  if( fullBright )
   {
     glDisable( GL_LIGHTING );
     glColor4f(1,1,1,1);
   } else {
-	glEnable( GL_LIGHTING );
+    glEnable( GL_LIGHTING );
   }
 
   //Draw geometry.
@@ -663,16 +663,18 @@ void drawModel( vboModel* model )
     cMat++;
   } while( cMat< model->matCount );
 
-  if( !model->recieveLight )
+  if( fullBright )
     glEnable( GL_LIGHTING );
 
   glActiveTexture( GL_TEXTURE0 );
 }
 
-void drawClayModel( vboModel* model, GLubyte c[3] )
+void drawClayModel( vboModel* model, GLubyte c[4], int_fast8_t allWhite )
 {
-
-    glDisable( GL_LIGHTING );
+    if(allWhite)
+    {
+      glDisable( GL_LIGHTING );
+    }
     glActiveTexture( GL_TEXTURE0 );
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable( GL_TEXTURE_2D );
@@ -687,13 +689,23 @@ void drawClayModel( vboModel* model, GLubyte c[3] )
     glTexCoordPointer( 2, GL_FLOAT, sizeof(vData), (GLvoid*)(sizeof(GLfloat)*6) );
 
     //set Clay color
-    glColor4ub( c[0],c[1],c[2],255 );
+    glColor4ubv( c );
 
     //Draw geometry.
 	glDrawArrays( model->drawType, 0, model->tris);
+  if(allWhite)
+  {
+    glEnable( GL_LIGHTING );
+  }
 
 }
 
+void drawWireframeModel( vboModel* model, GLubyte c[4], int_fast8_t allWhite )
+{
+  glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+  drawClayModel(model, c, allWhite);
+  glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+}
 
 //Takes care of //freeing resources allocated to model (memory for struct, texture, buffers)
 void eoModelFree( vboModel* model )

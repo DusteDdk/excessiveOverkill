@@ -408,6 +408,17 @@ engObj_s* eoObjCreate(int type)
   obj->id = state.nextObj;
   obj->components = initList();
   obj->gameData = NULL;
+
+  //Set solid-color
+  obj->solidColor[0] = 255;
+  obj->solidColor[1] = 255;
+  obj->solidColor[2] = 255;
+  obj->solidColor[3] = 255;
+  obj->fullBright=0;
+  //Set renderType
+  obj->renderType = EO_RENDER_FULL;
+
+
   return(obj);
 }
 
@@ -448,9 +459,10 @@ void eoObjBake(engObj_s* obj)
     	  }
     	  if( obj->clickedFunc )
     	  {
-    		  obj->_idcol[0]=idCols[0];
-    		  obj->_idcol[1]=idCols[1];
-    		  obj->_idcol[2]=idCols[2];
+    	    obj->_idcol[0]=idCols[0];
+    	    obj->_idcol[1]=idCols[1];
+    	    obj->_idcol[2]=idCols[2];
+    	    obj->_idcol[3]=255;
     	  }
       } //clickedFunc set
 
@@ -621,21 +633,26 @@ void gameDraw(listItem* objList)
       glEnable( GL_LIGHTING );
     }
 
-    GLubyte black[3];
-    black[0]=0;
-    black[1]=0;
-    black[2]=0;
     switch(obj->type)
     {
       case ENGOBJ_MODEL:
     	    if( findObjsByMouse != -1 && obj->clickedFunc )
           {
     	      eoGfxFboRenderBegin( gObjectSelectionTex );
-    	    	drawClayModel( obj->model, obj->_idcol );
+    	      drawClayModel( obj->model, obj->_idcol, 1 );
     	      eoGfxFboRenderEnd();
           }
 
-    	  drawModel(obj->model);
+    	    if( obj->renderType == EO_RENDER_FULL )
+    	    {
+            drawModel(obj->model, obj->fullBright);
+    	    } else if( obj->renderType == EO_RENDER_WIREFRAME )
+    	    {
+    	      drawWireframeModel(obj->model, obj->solidColor, obj->fullBright );
+    	    } else if( obj->renderType == EO_RENDER_CLAY )
+    	    {
+            drawClayModel(obj->model, obj->solidColor, obj->fullBright );
+    	    }
       break;
 
       case ENGOBJ_SPRITE:

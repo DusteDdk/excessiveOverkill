@@ -41,9 +41,11 @@ void eoModelFree( vboModel* model );
 int getMaterialIndex(vboModel* model, char* name);
 
 //Draws object geometry
-void drawModel( vboModel* model );
+void drawModel( vboModel* model, int_fast8_t fullBright );
 
 //Draws object but in clay without light, env or tex
-void drawClayModel( vboModel* model, GLubyte c[3] );
+void drawClayModel( vboModel* model, GLubyte c[3], int_fast8_t fullBright );
+void drawWireframeModel( vboModel* model, GLubyte c[4], int_fast8_t fullBright );
+
 
 #endif // VBOLOAD_H_INCLUDED
