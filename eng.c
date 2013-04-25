@@ -1,7 +1,7 @@
 ///This file is to be deleted and is only a todo of functions that need to be refactored
 #ifdef NOT_DEFINED_EVER
 todo:
-Alt i main skal væk og kaldes af eoInit
+Alt i main skal v��k og kaldes af eoInit
 
   //Console functions
   eoPrint //Print in console
@@ -152,15 +152,22 @@ int eoInitAll(int argc, char** argv, const char* datadir)
 
   DataSetDir( datadir );
 
-  eoSetting()->res.x = 1024;
-  eoSetting()->res.y = 768;
+  //Init SDL
+  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
+  atexit(SDL_Quit);
 
-  eoSetting()->fullScreen=0;
+  //Set native resolution and fullscreen if nobody tells us different
+  eoSetting()->res.x = SDL_GetVideoInfo()->current_w;
+  eoSetting()->res.y = SDL_GetVideoInfo()->current_h;
 
+  eoSetting()->fullScreen=SDL_FULLSCREEN;
+
+  //If we're going windowed mode, we go windowed mode except if told otherwise.
   if( argc > 2 )
   {
     eoSetting()->res.x = atoi(argv[1]);
     eoSetting()->res.y = atoi(argv[2]);
+    eoSetting()->fullScreen = 0;
     if( argc == 4 )
     {
       eoSetting()->fullScreen = SDL_FULLSCREEN;
@@ -169,10 +176,7 @@ int eoInitAll(int argc, char** argv, const char* datadir)
 
     eoSetting()->aspect = (float)eoSetting()->res.x/(float)eoSetting()->res.y;
 
-    /// InitSDL --->
-    //Init SDL
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
-    atexit(SDL_Quit);
+
 
     SDL_Surface* engVarScreen = SDL_SetVideoMode(eoSetting()->res.x, eoSetting()->res.y, 32, SDL_OPENGL | eoSetting()->fullScreen );
     if ( ! engVarScreen ) {
