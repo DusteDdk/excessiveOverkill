@@ -1,7 +1,7 @@
 /******************************************************************************
  * This file is part of ExcessiveOverkill.                                    *
  *                                                                            *
- * Copyright 2011 Jimmy Bøgh Christensen                                      *
+ * Copyright 2011 Jimmy B��gh Christensen                                      *
  *                                                                            *
  * ExcessiveOverkill is free software: you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by       *
@@ -606,7 +606,7 @@ void _inputRemoveSingleKeyCallback( uint16_t key, void(*callback)(inputEvent*) )
       while( (it=it->next) )
       {
         s = (eventSubscriber_t*)it->data;
-        if(callback == s->callback )
+        if(s->callback && callback == s->callback )
         {
           it=listRemoveItem( l, it );
           _freeEventSubscriber( s );
@@ -680,7 +680,7 @@ void eoInpRemHook( int_fast8_t event, uint16_t key, void (*callback)(inputEvent*
 
 }
 
-//Returns TRUE if no more callbacks should be made (hit an exclusive subscribtion)
+//calls key callback and returns TRUE if no more callbacks should be made (hit an exclusive subscribtion)
 bool _keyCallBack( void* data, int keyFlag, SDL_keysym key, int timeDown )
 {
   eventSubscriber_t* s = (eventSubscriber_t*)data;
@@ -800,7 +800,7 @@ void inputKeyDown( SDL_keysym k )
 
   if(!bound)
   {
-    eoPrint("Key %i ('%c') unbound.", (int)k.sym, k.sym);
+    eoPrint("Key %i (%s) unbound.", (int)k.sym, SDL_GetKeyName(k.sym));
   }
 
   dispatchRunning=0;
@@ -825,34 +825,38 @@ void inputKeyUp( SDL_keysym k )
     }
   }
 
-
-
-  it = _getKeySubList( k.sym, keySubs );
-
-  if( it )
+  if( ks )
   {
-    while( (it=it->next) )
-    {
-      if( _keyCallBack( it->data,INPUT_FLAG_UP, k, ks->timeDown ) )
-        break;
-    }
-  }
+    it = _getKeySubList( k.sym, keySubs );
 
-  if( !exclusive )
-  {
-    it = allKeySubs;
-    while( (it=it->next) )
+    if( it )
     {
-      if( _keyCallBack( it->data,INPUT_FLAG_UP, k, ks->timeDown ) )
+      while( (it=it->next) )
       {
-        exclusive=TRUE;
-        break;
+        if( _keyCallBack( it->data,INPUT_FLAG_UP, k, ks->timeDown ) )
+          break;
       }
     }
+
+    if( !exclusive )
+    {
+      it = allKeySubs;
+
+      while( (it=it->next) )
+      {
+
+        if( _keyCallBack( it->data,INPUT_FLAG_UP, k, ks->timeDown ) )
+        {
+          exclusive=TRUE;
+          break;
+        }
+      }
+    }
+
+    //Free the keystruct
+    free( ks );
   }
 
-  //Free the keystruct
-  free( ks );
   dispatchRunning=0;
 }
 
