@@ -1,7 +1,7 @@
 /******************************************************************************
  * This file is part of ExcessiveOverkill.                                    *
  *                                                                            *
- * Copyright 2011 Jimmy B�gh Christensen                                      *
+ * Copyright 2011 Jimmy B���gh Christensen                                      *
  *                                                                            *
  * ExcessiveOverkill is free software: you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by       *
@@ -77,6 +77,17 @@ Console definitions
 #define CON_TYPE_VEC3 5
 #define CON_INTERNAL_TYPE_FUNC 6
 #define CON_CALLBACK_HIDE_RETURN_VALUE -2193
+
+#define TXTCOL_BLACK  "^0"
+#define TXTCOL_WHITE  "^1"
+#define TXTCOL_RED    "^2"
+#define TXTCOL_GREEN  "^3"
+#define TXTCOL_BLUE   "^4"
+#define TXTCOL_YELLOW "^5"
+#define TXTCOL_PURPLE "^6"
+#define TXTCOL_CYAN   "^7"
+#define TXTCOL_SEMIBLACK "^8"
+#define TXTCOL_SEMIWHITE "^9"
 
 /*******************************************************************************
   Game list entry
