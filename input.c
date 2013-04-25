@@ -1,7 +1,7 @@
 /******************************************************************************
  * This file is part of ExcessiveOverkill.                                    *
  *                                                                            *
- * Copyright 2011 Jimmy B��gh Christensen                                      *
+ * Copyright 2011 Jimmy Bøgh Christensen                                      *
  *                                                                            *
  * ExcessiveOverkill is free software: you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by       *
@@ -50,7 +50,7 @@ typedef struct {
 typedef struct {
     char* name;
     SDLKey key;
-    inputCallback cb;
+    bindableFunctionItem* bFunc;
 } bindableKeyItem;
 
 int_fast8_t dispatchRunning;
@@ -69,6 +69,22 @@ listItem* bindableKeys;
 SDL_Joystick* joy[2];
 
 SDL_MouseButtonEvent mouseState;
+
+
+//Search through list of keySub_t and return the list of eventSubscribers_t if any.
+//Returns NULL if nothing is found.
+listItem*  _getKeySubList(SDLKey key,listItem* l)
+{
+  keySub_t* s;
+  listItem* it = l;
+  while( (it=it->next) )
+  {
+    s = (keySub_t*)it->data;
+    if( s->key.sym == key )
+      return( s->subscribers );
+  }
+  return(NULL);
+}
 
 int inputShowBinds(const char* str, void* data)
 {
@@ -124,7 +140,7 @@ int _inpListInFuncs(const char* str, void* data)
       sprintf( flagStr,"%s [hold]", flagStr);
     }
 
-    eoPrint( "%s - (%s ) %s", t->name, flagStr, t->descr );
+    eoPrint( TXTCOL_RED"%s"TXTCOL_CYAN" - ("TXTCOL_YELLOW"%s"TXTCOL_CYAN" ) "TXTCOL_WHITE"%s", t->name, flagStr, t->descr );
   }
 
   return(CON_CALLBACK_HIDE_RETURN_VALUE);
@@ -135,21 +151,44 @@ int _inpListInKeys(const char* str, void* data)
   listItem* it = bindableKeys;
   bindableKeyItem* k=NULL;
 
-  eoPrint("%i bindable keys:", listSize(bindableKeys));
+  eoPrint(TXTCOL_WHITE"%i"TXTCOL_CYAN" bindable keys:", listSize(bindableKeys));
   while( (it=it->next) )
   {
     k = (bindableKeyItem*)it->data;
-    eoPrint("%s", k->name );
+    eoPrint(TXTCOL_YELLOW"%s", k->name );
   }
   return(CON_CALLBACK_HIDE_RETURN_VALUE);
+}
+
+//Replace callback oldCb for key with newCb and newFlags
+void _inpSwapCallback( int eventType, SDLKey key, inputCallback oldCb, inputCallback newCb, int newFlags )
+{
+  eventSubscriber_t* s;
+  listItem* it;
+
+  it = _getKeySubList( key, keySubs );
+
+  if( it )
+  {
+
+    while( (it=it->next) )
+    {
+      s = (eventSubscriber_t*)it->data;
+      if(oldCb == s->callback )
+      {
+        s->callback = newCb;
+        s->flags=newFlags;
+      }
+    }
+
+  }
 }
 
 int _inpBind(const char* str, void* data)
 {
   bool found=0;
   listItem* it;
-  bindableFunctionItem* fi;
-  bindableFunctionItem* fii;
+  bindableFunctionItem* newBfunc;
   bindableKeyItem* ki;
 
   //Parse arguments
@@ -171,14 +210,16 @@ int _inpBind(const char* str, void* data)
 
   if(!found)
   {
-    eoPrint("The key '%s' is not a bindable key, type inkeys for a list of usable keys.");
+    eoPrint(TXTCOL_CYAN"The key "TXTCOL_RED"%s"TXTCOL_CYAN" is not a bindable key, type inkeys for a list of usable keys.");
   } else {
+
+    //Find the function
     it=bindableFunctions;
     found=0;
     while( (it=it->next) )
     {
-      fi = (bindableFunctionItem*)it->data;
-      if( strcmp(fi->name, funName ) == 0 )
+      newBfunc = (bindableFunctionItem*)it->data;
+      if( strcmp(newBfunc->name, funName ) == 0 )
       {
         found=1;
         break;
@@ -187,42 +228,27 @@ int _inpBind(const char* str, void* data)
 
     if(!found)
     {
-      eoPrint("The function '%s' is not a bindable function, type infuncs for a list of usable functions.");
+      eoPrint(TXTCOL_CYAN"The function "TXTCOL_RED"%s"TXTCOL_CYAN" is not a bindable function, type infuncs for a list of usable functions.");
     } else {
 
-      if( ki->cb )
+      //Already bound?
+      if( ki->bFunc )
       {
-        //Find name of current callback
-        it=bindableFunctions;
-        while( (it=it->next) )
-        {
-          fii = (bindableFunctionItem*)it->data;
-
-          //Find the one we are bound to
-          if( fii->cb == ki->cb )
-          {
-
             //Already the same function?
-            if( strcmp(fii->name, fi->name) == 0 )
+            if( ki->bFunc == newBfunc )
             {
-              eoPrint("Dude, %s is already bound to %s!", ki->name, fii->name);
-              found=0;
+              eoPrint(TXTCOL_GREEN"Dude... "TXTCOL_RED"%s"TXTCOL_CYAN" is already bound to "TXTCOL_RED"%s"TXTCOL_CYAN"!", ki->name, ki->bFunc->name);
             } else {
-              eoPrint("Currently bound to %s, unbinding %s.", fii->name,keyName);
-              eoInpRemHook( INPUT_EVENT_KEY, ki->key, ki->cb );
+              eoPrint(TXTCOL_RED"%s"TXTCOL_CYAN" was bound to "TXTCOL_RED"%s"TXTCOL_CYAN" swapping with "TXTCOL_RED"%s", keyName, ki->bFunc->name, newBfunc->name);
+              //eoInpRemHook( INPUT_EVENT_KEY, ki->key, ki->bFunc->cb );
+              _inpSwapCallback( INPUT_EVENT_KEY, ki->key, ki->bFunc->cb, newBfunc->cb, newBfunc->flags);
             }
-            break;
-          }
-        }
-      }
 
-      if( found )
-      {
-        eoPrint("%s is now bound to %s", keyName, funName );
-        ki->cb=fi->cb;
-        eoInpAddHook( INPUT_EVENT_KEY, fi->flags, ki->key, fi->cb );
+      } else {
+        eoPrint(TXTCOL_RED"%s"TXTCOL_CYAN" is now bound to "TXTCOL_RED"%s", keyName, funName );
+        ki->bFunc=newBfunc;
+        eoInpAddHook( INPUT_EVENT_KEY, ki->bFunc->flags, ki->key, ki->bFunc->cb );
       }
-
     }
 
   }
@@ -236,13 +262,13 @@ void eoInpAddFunc( const char* funcName, const char* funcDescr, inputCallback cb
 
   if( !((flags&INPUT_FLAG_DOWN)||(flags&INPUT_FLAG_UP)||(flags&INPUT_FLAG_HOLD)) )
   {
-    eoPrint("eoInpAddFunc( %s ) Error: One or more of INPUT_FLAG_[UP/DOWN/HOLD] required. Not added.", funcName);
+    eoPrint(TXTCOL_RED"eoInpAddFunc( %s ) Error: One or more of INPUT_FLAG_[UP/DOWN/HOLD] required. Not added.", funcName);
     return;
   }
 
   if( ((flags&INPUT_FLAG_MOVEMENT)||(flags&INPUT_FLAG_EXCLUSIVE)) )
   {
-    eoPrint("eoInpAddFunc( %s ) Error: INPUT_FLAG_[EXCLUSIVE/MOVEMENT] not allowed. Not added.", funcName);
+    eoPrint(TXTCOL_RED"eoInpAddFunc( %s ) Error: INPUT_FLAG_[EXCLUSIVE/MOVEMENT] not allowed. Not added.", funcName);
     return;
   }
 
@@ -262,7 +288,7 @@ void _addValidInputKey( const char* name, SDLKey key )
   bindableKeyItem* t = malloc(sizeof(bindableKeyItem));
   t->key=key;
   t->name = malloc( strlen(name)+1 );
-  t->cb=NULL;
+  t->bFunc=NULL;
   strcpy( t->name, name );
 
   listAddData(bindableKeys, (void*)t);
@@ -271,7 +297,7 @@ void _addValidInputKey( const char* name, SDLKey key )
 //Test-function to show how binding works.
 void _inputTestBindFunction( inputEvent* e )
 {
-  eoPrint("Got input event!");
+  eoPrint(TXTCOL_CYAN"Got input event: Key: "TXTCOL_RED"%s"TXTCOL_CYAN" pressed!", SDL_GetKeyName( e->key->sym.sym ));
 }
 
 void inputInit()
@@ -421,22 +447,6 @@ int_fast8_t _checkExclusive(int flags, listItem* l)
 
   //Return 1 if it's okay
   return(1);
-}
-
-
-//Search through list of keySub_t and return the list of eventSubscribers_t if any.
-//Returns NULL if nothing is found.
-listItem*  _getKeySubList(SDLKey key,listItem* l)
-{
-  keySub_t* s;
-  listItem* it = l;
-  while( (it=it->next) )
-  {
-    s = (keySub_t*)it->data;
-    if( s->key.sym == key )
-      return( s->subscribers );
-  }
-  return(NULL);
 }
 
 void _freeEventSubscriber( eventSubscriber_t* s )
@@ -589,7 +599,7 @@ void _inputRemoveSingleKeyCallback( uint16_t key, void(*callback)(inputEvent*) )
   listItem* it;
   listItem* iit;
   listItem* l;
-  //TODO: Broken removal stuff
+
   l = _getKeySubList( key, keySubs );
   it = l;
   if( l )
@@ -616,7 +626,7 @@ void _inputRemoveSingleKeyCallback( uint16_t key, void(*callback)(inputEvent*) )
             //Free that list.
             freeList( l );
 
-            //Remove that list from keySubs
+            //Remove references to that list from keySubs
             iit = keySubs;
             while( (iit=iit->next) )
             {
