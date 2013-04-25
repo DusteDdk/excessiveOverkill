@@ -39,7 +39,6 @@ static struct {
 
 //Black, White, Red, Green, Blue, Yellow, Purple, Cyan, semiBlack, semiWhite
 static const GLfloat txtColors[10][4] = { { 0.0,0.0,0.0,1.0 }, { 1.0,1.0,1.0,1.0 }, {1.0,0.0,0.0,1.0 }, {0.0,1.0,0.0,1.0 }, {0.0,0.0,1.0,1.0}, {1.0,1.0,0.0,1.0}, { 1.0,0.0,1.0,1.0 }, { 0.0,1.0,1.0,1.0 }, {0.0,0.0,0.0,0.5}, {1.0,1.0,1.0,0.5} };
-static const int_fast8_t defaultTxtColor = 2;
 
 void gltxtGenFont(const char* fileName, int_fast8_t f,int pointSize, float s)
 {
