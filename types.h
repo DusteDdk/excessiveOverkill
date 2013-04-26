@@ -431,7 +431,7 @@ typedef struct {
   Font definitions
 *******************************************************************************/
 //"normal" standard gui font
-#define FONT_S_NAME "TakaoExGothic.ttf"
+#define FONT_S_NAME "DejaVuSerif.ttf"
 #define FONT_M_NAME "256BYTES.TTF"
 #define FONT_L_NAME "256BYTES.TTF"
 #define FONT_SMALL 0 //Font Normal Small
