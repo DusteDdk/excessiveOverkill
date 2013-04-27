@@ -52,7 +52,6 @@ void gfxEngInit()
   eoFuncAdd( inputShowBinds, NULL, "binds" );
   eoFuncAdd( cameraFreeLook, NULL, "camfree" );
   eoFuncAdd( &cameraBeginRecord, NULL, "camstartrecord" );
-  eoFuncAdd( &cameraEndRecord, NULL, "camstoprecord" );
   eoFuncAdd( &camConPlayRec, NULL, "camplayrecord" );
   eoFuncAdd( cameraSetSens, NULL, "camsensitivity" );
   eoFuncAdd( cameraGrabCursor, NULL, "camgrabcursor" );

@@ -671,10 +671,12 @@ void drawModel( vboModel* model, int_fast8_t fullBright )
 
 void drawClayModel( vboModel* model, GLubyte c[4], int_fast8_t allWhite )
 {
+  int cMat=0;
     if(allWhite)
     {
       glDisable( GL_LIGHTING );
     }
+
     glActiveTexture( GL_TEXTURE0 );
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable( GL_TEXTURE_2D );
@@ -692,7 +694,24 @@ void drawClayModel( vboModel* model, GLubyte c[4], int_fast8_t allWhite )
     glColor4ubv( c );
 
     //Draw geometry.
-	glDrawArrays( model->drawType, 0, model->tris);
+    do
+    {
+      modelMaterial* mat = &model->materials[cMat];
+      if( !allWhite )
+      {
+        //Apply material
+        glCallList( mat->matDL );
+      }
+
+      //Draw verts
+      glDrawArrays( model->drawType, mat->start, mat->count);
+
+
+      //Go to next material
+      cMat++;
+    } while( cMat< model->matCount );
+
+
   if(allWhite)
   {
     glEnable( GL_LIGHTING );
@@ -702,9 +721,15 @@ void drawClayModel( vboModel* model, GLubyte c[4], int_fast8_t allWhite )
 
 void drawWireframeModel( vboModel* model, GLubyte c[4], int_fast8_t allWhite )
 {
+
+
+  glLineWidth(1.1f);
+  glDisable(GL_CULL_FACE);
   glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
   drawClayModel(model, c, allWhite);
   glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+  glEnable(GL_CULL_FACE);
+  glLineWidth(1);
 }
 
 //Takes care of //freeing resources allocated to model (memory for struct, texture, buffers)

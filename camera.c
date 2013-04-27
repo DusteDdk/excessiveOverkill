@@ -53,26 +53,7 @@ static GLfloat camMouseSens;
 static int camGrab;
 static int camLockLook;
 
-void camInit()
-{
-  memset( &cam, 0, sizeof(camData) );
-  cam.zoom = 1.0;
-  cam.zNear=1.5; //Not very scientific..
-  camFree=0;
-  camPlaybackFrame=0;
-  camPlaybackState=0;
-  camPlaybackData=0;
-  camRecordData=0;
-  camMoveSpeed = 0.15;
-  camMouseSens = 300;
-  camGrab=1;
-  camLockLook=0;
-}
 
-void _camInpEndRecord( inputEvent* unused )
-{
-  eoExec("camstoprecord");
-}
 
 int cameraBeginRecord( const char* args, void* data )
 {
@@ -90,15 +71,14 @@ int cameraBeginRecord( const char* args, void* data )
   if( camFile )
   {
     //Set data we need
-    camPlaybackState = CAM_PLAYSTATE_RECORDING;
+
     camPlaybackFrame = 0;
     camPlaybackData = 0;
     camRecordData = initList();
     eoExec( "camfree 1");
-    eoPrint("Recording to '%s'...", args);
-//    eoPrint("    Press SPACE to stop.");
-//    eoInpAddHook( INPUT_EVENT_KEY, INPUT_FLAG_UP, SDLK_SPACE, _camInpEndRecord );
-    _consoleToggle( NULL );
+    eoPrint(TXTCOL_YELLOW"Press SPACE to start recording to %s. Space again to stop", args);
+    eoExec( "bind space camRecordStart" );
+//    _consoleToggle( NULL );
   } else {
     eoPrint("Can't open '%s' for writing.", args);
   }
@@ -107,53 +87,60 @@ int cameraBeginRecord( const char* args, void* data )
   return( CON_CALLBACK_HIDE_RETURN_VALUE );
 }
 
-int cameraEndRecord( const char* args, void* data )
+void camRecordStart(inputEvent* e)
 {
-  if( camPlaybackState != CAM_PLAYSTATE_RECORDING )
+  if( camFile )
   {
-    eoPrint("Camera is not recording.");
-    return(CON_CALLBACK_HIDE_RETURN_VALUE);
+    eoExec( "bind space camRecordStop" );
+    eoPrint("Recording... Press space to stop!");
+    camPlaybackState = CAM_PLAYSTATE_RECORDING;
   }
+}
 
-  eoPrint("Recording stopped.");
-
-  ///TODO BUG: Fix! Unhook space..
-
-  struct list* it = camRecordData;
-  camData* dat;
-  int f=0;
-  //Setup file header
-  camFileHeader header;
-  header.version = 1;
-  header.endian = 1;
-  header.floatSize = sizeof(GLfloat);
-  header.frames = listSize( camRecordData );
-
-  //Convert list to array
-  camPlaybackData = malloc( sizeof(camData)*header.frames );
-  while( (it=it->next) )
+void camRecordStop( inputEvent* e)
+{
+  if( camFile &&  camPlaybackState == CAM_PLAYSTATE_RECORDING )
   {
-    dat = (camData*)it->data;
-    camPlaybackData[f] = *dat;
-    free(dat);
-    f++;
+     eoPrint("Recording stopped.");
+
+     struct list* it = camRecordData;
+     camData* dat;
+     int f=0;
+     //Setup file header
+     camFileHeader header;
+     header.version = 1;
+     header.endian = 1;
+     header.floatSize = sizeof(GLfloat);
+     header.frames = listSize( camRecordData );
+
+     //Convert list to array
+     camPlaybackData = malloc( sizeof(camData)*header.frames );
+     while( (it=it->next) )
+     {
+       dat = (camData*)it->data;
+       camPlaybackData[f] = *dat;
+       free(dat);
+       f++;
+     }
+
+     //Write data to file
+     //Header first
+     fwrite( &header, sizeof(camFileHeader), 1, camFile );
+
+     //Data next
+     fwrite( camPlaybackData, sizeof(camData), header.frames, camFile );
+     //Close file, reset data
+     fclose( camFile );
+     camFile=NULL;
+     free( camPlaybackData );
+     camPlaybackData=0;
+
+     //Free list
+     freeList(camRecordData);
+     camPlaybackState=CAM_PLAYSTATE_STOPPED;
+  } else {
+    eoPrint("Not recording...");
   }
-
-  //Write data to file
-  //Header first
-  fwrite( &header, sizeof(camFileHeader), 1, camFile );
-
-  //Data next
-  fwrite( camPlaybackData, sizeof(camData), header.frames, camFile );
-  //Close file, reset data
-  fclose( camFile );
-  free( camPlaybackData );
-  camPlaybackData=0;
-
-  //Free list
-  freeList(camRecordData);
-
-  return( CON_CALLBACK_HIDE_RETURN_VALUE );
 }
 
 void eoCamRecPlay( const char* fileName, int absolute, void (*finishedCallback)() )
@@ -525,4 +512,24 @@ void eoCamMoveDown( GLfloat l )
 
   if(!camLockLook)
     cam.target.y -= l;
+}
+
+
+void camInit()
+{
+  memset( &cam, 0, sizeof(camData) );
+  cam.zoom = 1.0;
+  cam.zNear=1.5; //Not very scientific..
+  camFree=0;
+  camPlaybackFrame=0;
+  camPlaybackState=0;
+  camPlaybackData=0;
+  camRecordData=0;
+  camMoveSpeed = 0.15;
+  camMouseSens = 300;
+  camGrab=1;
+  camLockLook=0;
+
+  eoInpAddFunc( "camRecordStart", "Starts recording file.", camRecordStart, INPUT_FLAG_UP );
+  eoInpAddFunc( "camRecordStop", "Stops recording file.", camRecordStop, INPUT_FLAG_DOWN );
 }
