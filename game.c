@@ -20,6 +20,7 @@
 #include "game.h"
 #include "console.h"
 #include "input.h"
+#include <math.h>
 
 static GLubyte idCols[4];
 renderTex_t* gObjectSelectionTex=NULL;
@@ -418,6 +419,8 @@ engObj_s* eoObjCreate(int type)
   //Set renderType
   obj->renderType = EO_RENDER_FULL;
 
+  obj->disabled=0;
+
 
   return(obj);
 }
@@ -578,102 +581,105 @@ void gameDraw(listItem* objList)
   {
     obj=(engObj_s*)it->data;
 
-    gameDraw( obj->components );
-
-    glPushMatrix();
-    glTranslatef( obj->pos.x, obj->pos.y, obj->pos.z );
-    glRotatef( obj->rot.x, 1,0,0 );
-    glRotatef( obj->rot.y, 0,1,0 );
-    glRotatef( obj->rot.z, 0,0,1 );
-
-    //Draw hitbox
-    if( state.drawHitbox )
+    if(!obj->disabled)
     {
-      glDisable(GL_TEXTURE_2D);
-      glEnable(GL_COLOR_MATERIAL);
-      glDisable( GL_LIGHTING );
+      gameDraw( obj->components );
 
-      glLineWidth( 2 );
-      glBegin( GL_LINES );
-        glColor4f( 1,0,0,1 );
-        glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
+      glPushMatrix();
+      glTranslatef( obj->pos.x, obj->pos.y, obj->pos.z );
+      glRotatef( obj->rot.x, 1,0,0 );
+      glRotatef( obj->rot.y, 0,1,0 );
+      glRotatef( obj->rot.z, 0,0,1 );
 
-        glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
+      //Draw hitbox
+      if( state.drawHitbox )
+      {
+        glDisable(GL_TEXTURE_2D);
+        glEnable(GL_COLOR_MATERIAL);
+        glDisable( GL_LIGHTING );
 
-        glColor4f( 0,0,1,1 );
-        glVertex3f( obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
+        glLineWidth( 2 );
+        glBegin( GL_LINES );
+          glColor4f( 1,0,0,1 );
+          glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
 
-        glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
 
-        glColor4f( 0,1,0,1 );
-        glVertex3f( obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
+          glColor4f( 0,0,1,1 );
+          glVertex3f( obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
 
-        glVertex3f( obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
-        glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
-        glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
-      glEnd();
+          glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
 
-      glDisable(GL_COLOR_MATERIAL);
-      glEnable( GL_LIGHTING );
-    }
+          glColor4f( 0,1,0,1 );
+          glVertex3f( obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, -obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, -obj->_hitBox.z );
 
-    switch(obj->type)
-    {
-      case ENGOBJ_MODEL:
-    	    if( findObjsByMouse != -1 && obj->clickedFunc )
+          glVertex3f( obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z );
+          glVertex3f( -obj->_hitBox.x, -obj->_hitBox.y, obj->_hitBox.z );
+        glEnd();
+
+        glDisable(GL_COLOR_MATERIAL);
+        glEnable( GL_LIGHTING );
+      }
+
+      switch(obj->type)
+      {
+        case ENGOBJ_MODEL:
+          if( findObjsByMouse != -1 && obj->clickedFunc )
           {
-    	      eoGfxFboRenderBegin( gObjectSelectionTex );
-    	      drawClayModel( obj->model, obj->_idcol, 1 );
-    	      eoGfxFboRenderEnd();
+            eoGfxFboRenderBegin( gObjectSelectionTex );
+            drawClayModel( obj->model, obj->_idcol, 1 );
+            eoGfxFboRenderEnd();
           }
 
-    	    if( obj->renderType == EO_RENDER_FULL )
-    	    {
+          if( obj->renderType == EO_RENDER_FULL )
+          {
             drawModel(obj->model, obj->fullBright);
-    	    } else if( obj->renderType == EO_RENDER_WIREFRAME )
-    	    {
-    	      drawWireframeModel(obj->model, obj->solidColor, obj->fullBright );
-    	    } else if( obj->renderType == EO_RENDER_CLAY )
-    	    {
+          } else if( obj->renderType == EO_RENDER_WIREFRAME )
+          {
+            drawWireframeModel(obj->model, obj->solidColor, obj->fullBright );
+          } else if( obj->renderType == EO_RENDER_CLAY )
+          {
             drawClayModel(obj->model, obj->solidColor, obj->fullBright );
-    	    }
-      break;
+          }
+        break;
 
-      case ENGOBJ_SPRITE:
-        glPushMatrix();
-        eoGfxBillboardBegin();
-        glEnable(GL_TEXTURE_2D);
-        glDisable( GL_LIGHTING );
-        glColor4f( 1.0,1.0,1.0,1.0 );
-        spriteDraw( obj->sprite );
-        glEnable( GL_LIGHTING );
-        eoGfxBillBoardEnd();
-        glPopMatrix();
-      break;
+        case ENGOBJ_SPRITE:
+          glPushMatrix();
+          eoGfxBillboardBegin();
+          glEnable(GL_TEXTURE_2D);
+          glDisable( GL_LIGHTING );
+          glColor4f( 1.0,1.0,1.0,1.0 );
+          spriteDraw( obj->sprite );
+          glEnable( GL_LIGHTING );
+          eoGfxBillBoardEnd();
+          glPopMatrix();
+        break;
 
-      case ENGOBJ_SOUND:
-        eoSamplePlay( obj->sound, 128 ); ///Fixme; should be relative to the camera position.
-        eoObjDel( obj );
-      break;
+        case ENGOBJ_SOUND:
+          eoSamplePlay( obj->sound, 128 ); ///Fixme; should be relative to the camera position.
+          eoObjDel( obj );
+        break;
+      }
+
+      glPopMatrix();
     }
-
-    glPopMatrix();
 
   }
 }

@@ -239,6 +239,7 @@ typedef struct {
 
 typedef struct eoObj_struct {
 
+  int disabled; //Do nothing to this object.
   int id;
   int deleteMe;
   int type; //Sprite, Model, Particle Emitter or Sound clip

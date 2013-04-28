@@ -40,6 +40,7 @@ void eoCamMoveDown( GLfloat l );
 vec3 eoCamPosGet();
 vec3 eoCamTargetGet();
 GLfloat eoCamZoomGet();
+vec3 eoCamDirectionGet();
 
 void eoCamRecPlay( const char* fileName, int absolute, void (*finishedCallback)() );
 void eoCamRecStop();

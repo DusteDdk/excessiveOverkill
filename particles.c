@@ -29,7 +29,7 @@ typedef struct {
   listItem* emitters;
 } psys_s;
 
-psys_s psys;
+static psys_s psys;
 
 //Creates a standard emitter structure to be setup.
 particleEmitter_s* eoPsysNewEmitter()
@@ -80,7 +80,6 @@ void eoPsysBake( particleEmitter_s* e )
 
     //Add to list of emitters
     listAddData(psys.emitters, (void*)e);
-
   } else {
     eoPrint("Particle system %p either incomplete or allready baked.");
   }

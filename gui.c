@@ -987,6 +987,12 @@ void eoGuiSetCursor( sprite_s* spr, int pointX, int pointY )
 	gui.cursor = spr;
 }
 
+void eoGuiWarpMouse( int16_t x, int16_t y)
+{
+  gui.cursorPos.x = x;
+  gui.cursorPos.y = y;
+  SDL_WarpMouse(x,y);
+}
 
 guiWindow_s* eoGuiContextGet()
 {

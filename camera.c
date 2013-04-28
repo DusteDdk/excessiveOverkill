@@ -143,6 +143,7 @@ void camRecordStop( inputEvent* e)
   }
 }
 
+//Play movements from fileName, if finishedCallback is defined, it will be called when the recording stops.
 void eoCamRecPlay( const char* fileName, int absolute, void (*finishedCallback)() )
 {
   //Only if stopped
@@ -303,9 +304,12 @@ GLfloat eoCamZoomGet()
   return(cam.zoom);
 }
 
-
-
 static GLfloat xrot=0,yrot=0;
+vec3 eoCamDirectionGet()
+{
+  return( eoVec3FromAngle( xrot, yrot ) );
+}
+
 void _camInput(inputEvent* e)
 {
   if(e->key)
@@ -339,7 +343,7 @@ void _camInput(inputEvent* e)
       if( yrot < 0.0001 ) yrot = 0.0001;
       if( yrot > 3.1415925 ) yrot = 3.1415925;
 
-      cam.target = eoVec3Add( cam.pos, eoVec3Scale( eoVec3FromAngle( xrot, yrot ), 25 ) );
+      cam.target = eoVec3Add( cam.pos, eoVec3Scale( eoCamDirectionGet(), 25 ) );
 
     } else if( e->mouse->type == INPUT_EVENT_TYPE_BUTTON )
     {
