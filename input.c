@@ -422,6 +422,8 @@ void inputInit()
   _addValidInputKey( "f11", SDLK_F11);
   _addValidInputKey( "f12", SDLK_F12);
   _addValidInputKey( "pause", SDLK_PAUSE);
+  _addValidInputKey( "esc", SDLK_ESCAPE);
+
 
   eoInpAddFunc("inptestfunup",   "This function gets called if a key is released.", _inputTestBindFunction, INPUT_FLAG_UP );
   eoInpAddFunc("inptestfundown", "This function gets called if a key is pressed down.", _inputTestBindFunction, INPUT_FLAG_DOWN );
