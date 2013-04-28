@@ -18,9 +18,9 @@ sprite.o strings.o tick.o vboload.o 3rd/eo_glew.o 3rd/winvasp.o
 
 ########################################################################
 
-release: CFLAGS += -O3 -DEO_RELEASE
+release: CFLAGS += -O1 -DEO_RELEASE
 release: $(TARGET)
-		$(STRIP) $(TARGET)
+#		$(STRIP) $(TARGET)
 
 debug: CFLAGS += -Wall -O0 -g -DEO_DEBUG
 debug: $(TARGET)
