@@ -221,6 +221,10 @@ int eoInitAll(int argc, char** argv, const char* datadir)
     return(1);
   }
 
+void eoQuit()
+{
+  engVarDone=1;
+}
 
 void eoMainLoop()
 {

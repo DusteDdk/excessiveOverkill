@@ -646,6 +646,12 @@ void eoGuiShow()
     }
   }
 }
+
+int eoGuiIsCursorVisible()
+{
+  return( gui.showCursor );
+}
+
 void eoGuiHide()
 {
   if(gui.drawGui)

@@ -47,6 +47,8 @@ void eoCamRecStop();
 int cameraBeginRecord( const char* args, void* data );
 int cameraEndRecord( const char* args, void* data );
 int camConPlayRec( const char* args, void* data );
+int cameraRecordRelative( const char* args, void* data);
+int eoCamGetPlaybackState();
 
 camData* camGet(); //Returns camera data
 int cameraFreeLook( const char* args, void* data ); //Console callback, for enabling freelook

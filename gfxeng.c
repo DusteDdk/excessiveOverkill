@@ -56,6 +56,7 @@ void gfxEngInit()
   eoFuncAdd( cameraSetSens, NULL, "camsensitivity" );
   eoFuncAdd( cameraGrabCursor, NULL, "camgrabcursor" );
   eoFuncAdd( cameraLockLook, NULL, "camlocktarget" );
+  eoFuncAdd( cameraRecordRelative, NULL, "camrecrel" );
 
   eoVarAdd(CON_TYPE_VEC3,0, &camGet()->pos, "campos");
   eoVarAdd(CON_TYPE_VEC3,0, &camGet()->target, "camlook");

@@ -45,4 +45,6 @@
 
 int eoInitAll(int argc, char** argv, const char* datadir);
 void eoMainLoop();
+void eoQuit();
+
 #endif // ENG_H_INCLUDED

@@ -39,6 +39,7 @@ guiImage_s* eoGuiAddImage  (guiWindow_s* container, GLfloat posx, GLfloat posy, 
 guiTextBox_s* eoGuiAddTextBox(guiWindow_s* container, GLfloat posx, GLfloat posy, int numLines, int font, const char* text);
 
 void eoGuiShowCursor( int showCursor );
+int eoGuiIsCursorVisible();
 void eoGuiSetCursor( sprite_s* spr, int pointX, int pointY ); //PointX/Y is offset from 0,0 in the img.
 void eoGuiWarpMouse( int16_t x, int16_t y); //Set mouse to desired location.
 

@@ -46,14 +46,19 @@ static listItem* camRecordData;
 static camFileHeader camHead;
 static int camPlaybackPosition;
 static void (*camFinishedCallback)();
-
 static GLfloat camMoveSpeed;
 static GLfloat camMouseSens;
 
 static int camGrab;
 static int camLockLook;
 
+vec3 relStartPos;
+vec3 relStartTar;
 
+int eoCamGetPlaybackState()
+{
+  return( camPlaybackState );
+}
 
 int cameraBeginRecord( const char* args, void* data )
 {
@@ -76,6 +81,8 @@ int cameraBeginRecord( const char* args, void* data )
     camPlaybackData = 0;
     camRecordData = initList();
     eoExec( "camfree 1");
+    camPlaybackPosition = CAM_PLAYBACK_POSITION_ABSOLUTE;
+   // eoPrint( TXTCOL_YELLOW"Use camrecrel 1 to set relative recording.");
     eoPrint(TXTCOL_YELLOW"Press SPACE to start recording to %s. Space again to stop", args);
     eoExec( "bind space camRecordStart" );
 //    _consoleToggle( NULL );
@@ -87,6 +94,20 @@ int cameraBeginRecord( const char* args, void* data )
   return( CON_CALLBACK_HIDE_RETURN_VALUE );
 }
 
+int cameraRecordRelative( const char* args, void* data )
+{
+  int i = atoi(args);
+  if( i )
+  {
+    eoPrint("Relative recording enabled.");
+    camPlaybackPosition = CAM_PLAYBACK_POSITION_RELATIVE;
+  } else {
+    eoPrint("Relative recording disabled.");
+    camPlaybackPosition = CAM_PLAYBACK_POSITION_ABSOLUTE;
+  }
+  return( CON_CALLBACK_HIDE_RETURN_VALUE );
+}
+
 void camRecordStart(inputEvent* e)
 {
   if( camFile )
@@ -94,6 +115,10 @@ void camRecordStart(inputEvent* e)
     eoExec( "bind space camRecordStop" );
     eoPrint("Recording... Press space to stop!");
     camPlaybackState = CAM_PLAYSTATE_RECORDING;
+
+    relStartPos = cam.pos;
+    relStartTar = cam.target;
+
   }
 }
 
@@ -146,6 +171,7 @@ void camRecordStop( inputEvent* e)
 //Play movements from fileName, if finishedCallback is defined, it will be called when the recording stops.
 void eoCamRecPlay( const char* fileName, int absolute, void (*finishedCallback)() )
 {
+  eoPrint("Playing %s (cb: %p)..", fileName, finishedCallback );
   //Only if stopped
   if( camPlaybackState != CAM_PLAYSTATE_STOPPED )
   {
@@ -200,7 +226,7 @@ int camConPlayRec( const char* args, void* data )
   char buf[1024];
   eoPrint("Playing recording: %s", args);
   strcpy(buf, args);
-  eoCamRecPlay( buf, TRUE, NULL );
+  eoCamRecPlay( buf, CAM_PLAYBACK_POSITION_ABSOLUTE, NULL );
   _consoleToggle( NULL );
   return( CON_CALLBACK_HIDE_RETURN_VALUE );
 }
@@ -217,7 +243,13 @@ void eoCamRecStop()
 
 void _camPlayback()
 {
-  cam = camPlaybackData[camPlaybackFrame];
+  if(camPlaybackPosition == CAM_PLAYBACK_POSITION_ABSOLUTE)
+  {
+    cam = camPlaybackData[camPlaybackFrame];
+  } else {
+    //Broken
+  }
+
   camPlaybackFrame++;
 
   if( camPlaybackFrame == camHead.frames )
@@ -235,6 +267,13 @@ void _camRecord()
   //add frame to list
   camData* d = malloc( sizeof(camData) );
   *d = cam;
+
+
+  if( camPlaybackPosition == CAM_PLAYBACK_POSITION_RELATIVE )
+  {
+//    d->pos = eoVec3FromPoints( relStartPos,d->pos );
+//   d->target = eoVec3FromPoints( relStartTar, d->target );
+  }
 
   listAddData( camRecordData, (void*)d );
 
