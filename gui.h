@@ -49,6 +49,11 @@ void eoGuiContextDel( guiWindow_s* container);  //Free all elements in container
 void eoGuiShow();
 void eoGuiHide();
 
+///TODO: Implement file-selection dialog. If multipleFiles = TRUE, multiple files can be selected, if fileType is NULL, all files can be selected, otherwise only files ending in ."fileType" If NULL, showing ending, else, only showing name.
+#define EO_FILESELECTION_OPEN 1
+#define EO_FILESELECTION_CLOSED 2
+eoGuiFileSelectionDialog_s* eoGuiAddFileSelectionDialog( guiWindow_s* container, GLfloat posx, GLfloat posy, const char* title, const char* text, const char* dir, bool multipleFiles, const char* fileType, guiCallback callback );
+
 int eoGuiFade(int action, int time, guiCallback callback, void* data);
 
 
