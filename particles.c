@@ -125,6 +125,7 @@ void _eoPsysEmit( particleEmitter_s* e )
   for(i=0; i<e->_maxParticles; i++)
   {
     p = &e->_particles[i];
+    p->flick=0;
 
     if(p->lifeLeft<1)
     {
@@ -238,6 +239,11 @@ void _psysSimParticles( particleEmitter_s* e)
       if( p->lifeLeft < 1 )
         e->_availParticles++;
 
+      if( e->percentFlicker<100)
+      {
+          p->flick=(rand()%100);
+      }
+
       p->position[0] += (p->velocity[0]+e->wind.x) / eoTicks();
       p->position[1] += (p->velocity[1]+e->wind.y) / eoTicks();
       p->position[2] += (p->velocity[2]+e->wind.z) / eoTicks();
@@ -303,7 +309,7 @@ void psysDraw()
       if(p->lifeLeft>0)
       {
        //Flicker? (The first condition avoids calling rand and mod if we're always "on")
-        if( (e->percentFlicker==100) || (e->percentFlicker > (rand()%100)) )
+        if( e->percentFlicker > p->flick )
         {
           //Used for alpha and size changes (if relevant)
           particleStrength=(GLfloat)p->lifeLeft/(GLfloat)p->life;
