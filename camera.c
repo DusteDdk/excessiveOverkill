@@ -279,6 +279,17 @@ void _camRecord()
 
 }
 
+void camSetMatrix()
+{
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glFrustum( -eoSetting()->aspect*cam.zoom, eoSetting()->aspect*cam.zoom, -1.0*cam.zoom, 1.0*cam.zoom, cam.zNear, 5000.0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  gluLookAt(cam.pos.x, cam.pos.y, cam.pos.z, cam.target.x, cam.target.y, cam.target.z, 0,1,0);
+}
 
 void camBegin()
 {
@@ -296,13 +307,8 @@ void camBegin()
     }
   }
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glFrustum( -eoSetting()->aspect*cam.zoom, eoSetting()->aspect*cam.zoom, -1.0*cam.zoom, 1.0*cam.zoom, cam.zNear, 5000.0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+  camSetMatrix();
 
-  gluLookAt(cam.pos.x, cam.pos.y, cam.pos.z, cam.target.x, cam.target.y, cam.target.z, 0,1,0);
 }
 
 
@@ -455,6 +461,11 @@ int cameraGrabCursor( const char* args, void* data)
     camGrab=0;
   }
   return( camGrab );
+}
+
+void setCameraLockLook(int l)
+{
+    camLockLook=l;
 }
 
 int cameraLockLook( const char* args, void* data)

@@ -25,6 +25,9 @@
 static GLubyte idCols[4];
 renderTex_t* gObjectSelectionTex=NULL;
 
+renderTex_t* gOvrHackL=NULL;
+renderTex_t* gOvrHackR=NULL;
+
 static gameState_s state;
 static int mouseLastX=0;
 static int mouseLastY=0;
@@ -91,6 +94,9 @@ void eoGameEnableMouseSelection(GLfloat scale)
   findObjsByMouse=1;
   fboTexScale=scale;
   gObjectSelectionTex=eoGfxFboCreate( eoSetting()->res.x*scale, eoSetting()->res.y*scale );
+
+  gOvrHackL=eoGfxFboCreate( eoSetting()->res.x/2.0, eoSetting()->res.y );
+  gOvrHackR=eoGfxFboCreate( eoSetting()->res.x/2.0, eoSetting()->res.y );
 }
 
 int _setMouseSelectionScale( const char* arg, void* unused )
@@ -99,9 +105,36 @@ int _setMouseSelectionScale( const char* arg, void* unused )
   eoGameEnableMouseSelection(f);
   return( CON_CALLBACK_HIDE_RETURN_VALUE );
 }
+float ipd=0;
+float border=90.0;
+int stereo=0;
+
+void borderp()
+{
+    //ipd+=0.1;
+   border+=3;
+}
+void borderm()
+{
+    //ipd-=0.1;
+   border-=3;
+}
+
+void ipdp()
+{
+    ipd+=0.25;
+   //border+=3;
+}
+void ipdm()
+{
+    ipd-=0.25;
+  // border-=3;
+}
+
 
 void eoGameInit()
 {
+
   memset( &state, 0, sizeof(gameState_s) );
   eoPrint("gameInit();");
 
@@ -114,6 +147,22 @@ void eoGameInit()
 
   eoFuncAdd( _setMouseSelectionScale, NULL, "setMouseSelectionScale" );
 
+  eoInpAddFunc("ipdp", "Increase IPD", ipdp, INPUT_EVENT_KEY);
+  eoInpAddFunc("ipdm", "Decrease IPD", ipdm, INPUT_EVENT_KEY);
+
+    eoInpAddFunc("borderp", "Increase IPD", borderp, INPUT_EVENT_KEY);
+  eoInpAddFunc("borderm", "Decrease IPD", borderm, INPUT_EVENT_KEY);
+  eoVarAdd(CON_TYPE_FLOAT, 0, &ipd, "ipd");
+  eoVarAdd(CON_TYPE_INT, 0, &stereo, "stereo");
+
+  eoVarAdd(CON_TYPE_FLOAT, 0, &border, "border");
+
+  eoExec("bind z ipdp");
+  eoExec("bind x ipdm");
+
+  eoExec("bind 1 borderp");
+  eoExec("bind 2 borderm");
+  eoExec("echo yah");
   state.world.objs = initList();
   state._deleteObjs = initList();
   state.world.gameFrameStart = NULL;
@@ -318,15 +367,96 @@ void gameRun()
   }
 
   //Draw objects
-  gameDraw(state.world.objs);
+  int lastFOBM = findObjsByMouse;
+  findObjsByMouse=-1;
+
+  if(stereo)
+  {
+      setCameraLockLook(0);
+
+      eoCamMoveLeft(ipd/2.0);
+      camSetMatrix();
+      eoGfxFboRenderBegin( gOvrHackL );
+      eoGfxFboClearTex();
+      gameDraw(state.world.objs);
+        //Draw particle systems
+      psysDraw();
+      eoGfxFboRenderEnd();
+
+      eoCamMoveRight(ipd);
+      camSetMatrix();
+      eoGfxFboRenderBegin( gOvrHackR );
+      eoGfxFboClearTex();
+      gameDraw(state.world.objs);
+      //Draw particle systems
+      psysDraw();
+        eoGfxFboRenderEnd();
+
+      eoCamMoveLeft(ipd/2.0);
+
+      //////////////////
+      glMatrixMode(GL_PROJECTION);
+
+      glLoadIdentity();
+      glOrtho( 0, eoSetting()->res.x, eoSetting()->res.y, 0, 0,1);
+      glColor4f(1,1,1,1);
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+
+      glDisable(GL_DEPTH_TEST);
+      glDisable( GL_CULL_FACE );
+      glDisable(GL_LIGHTING);
+
+      glLoadIdentity();
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, gOvrHackL->tex );
+
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+      glColor4f( 1,1,1, 1 );
+      glBegin( GL_QUADS );
+        glTexCoord2f( 0,gOvrHackL->t ); glVertex2f( border,0 );
+        glTexCoord2f( gOvrHackL->s, gOvrHackL->t ); glVertex2f( eoSetting()->res.x/2.0,0 );
+        glTexCoord2f( gOvrHackL->s, 0 ); glVertex2f( eoSetting()->res.x/2.0, eoSetting()->res.y );
+        glTexCoord2f( 0, 0 ); glVertex2f( border, eoSetting()->res.y );
+      glEnd();
 
 
+      glBindTexture(GL_TEXTURE_2D, gOvrHackR->tex );
+
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+      glColor4f( 1,1,1, 1 );
+      glBegin( GL_QUADS );
+        glTexCoord2f( 0,gOvrHackR->t ); glVertex2f( eoSetting()->res.x/2.0,0 );
+        glTexCoord2f( gOvrHackR->s, gOvrHackR->t ); glVertex2f( eoSetting()->res.x-border,0 );
+        glTexCoord2f( gOvrHackR->s, 0 ); glVertex2f( eoSetting()->res.x-border, eoSetting()->res.y );
+        glTexCoord2f( 0, 0 ); glVertex2f( eoSetting()->res.x/2.0, eoSetting()->res.y );
+      glEnd();
+
+      findObjsByMouse=lastFOBM;
+  } else {
+    camSetMatrix();
+    gameDraw(state.world.objs);
+    psysDraw();
+  }
+
+
+
+  findObjsByMouse = lastFOBM;
 
   if( findObjsByMouse == 1 ) //If -1, it's disabled
   {
+    eoGfxFboRenderBegin( gObjectSelectionTex );
+    eoGfxFboClearTex();
+    gameDraw(state.world.objs);
+    eoGfxFboRenderEnd();
+
     //Find any elements with mouse over them
     eoGfxFboRenderBegin( gObjectSelectionTex );
-    glReadPixels( (mouseLastX)*fboTexScale, (eoSetting()->res.y-mouseLastY)*fboTexScale,1,1,GL_RGB, GL_UNSIGNED_BYTE, &pix);
+    glReadPixels( (mouseLastX)*fboTexScale , (eoSetting()->res.y-mouseLastY)*fboTexScale,1,1,GL_RGB, GL_UNSIGNED_BYTE, &pix);
     if( !showFboTex )
       eoGfxFboClearTex();
 
@@ -383,9 +513,6 @@ void gameRun()
     eoGfxFboClearTex();
     eoGfxFboRenderEnd();
   }
-
-  //Draw particle systems
-  psysDraw();
 
 }
 
@@ -641,14 +768,10 @@ void gameDraw(listItem* objList)
       switch(obj->type)
       {
         case ENGOBJ_MODEL:
-          if( findObjsByMouse != -1 && obj->clickedFunc )
+          if( findObjsByMouse == 1 && obj->clickedFunc )
           {
-            eoGfxFboRenderBegin( gObjectSelectionTex );
             drawClayModel( obj->model, obj->_idcol, 1 );
-            eoGfxFboRenderEnd();
-          }
-
-          if( obj->renderType == EO_RENDER_FULL )
+          } else if( obj->renderType == EO_RENDER_FULL )
           {
             drawModel(obj->model, obj->fullBright);
           } else if( obj->renderType == EO_RENDER_WIREFRAME )

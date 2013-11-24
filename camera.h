@@ -57,5 +57,7 @@ int cameraSetSens( const char* args, void* data ); //Console callback for settin
 
 int cameraGrabCursor( const char* args, void* data);
 int cameraLockLook( const char* args, void* data);
+void camSetMatrix();
+void setCameraLockLook(int l);
 
 #endif // CAMERA_H_INCLUDED
