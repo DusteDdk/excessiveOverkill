@@ -35,13 +35,15 @@
 void guiRemoveWin(guiWindow_s* containerWin, guiWindow_s* removeWin);
 void _guiDrawWin( guiWindow_s* win, GLfloat ofx, GLfloat ofy );
 
+void _guiDrawScrollBar( guiScrollBar_s* sb, GLfloat ofx, GLfloat ofy );
+
 typedef struct {
   bool drawGui;
   bool showCursor;
   bool isHooked;     //Check if we hooked mouse (since there are two functions that can do that)
   bool mBtnDown;      //State of mousebutton 1, to detect dragging a window
   vec2 mDragOffset;   //Offset from window pos (so window position can easily be set when dragging)
-  guiWindow_s* dragMe;//Window to be dragged, or NULL for no window.
+  guiElement_s* dragMe;//Object to be dragged, or NULL for no window.
   guiWindow_s* draggedParent; //To check we don't move outside it's parent window!
   sprite_s* cursor;
   vec2 cursorOffset;
@@ -326,9 +328,35 @@ guiTextBox_s* eoGuiAddTextBox(guiWindow_s* container, GLfloat posx, GLfloat posy
   return(0);
 }
 
+guiScrollBar_s* eoGuiAddScrollBar( guiWindow_s* container, GLfloat posx, GLfloat posy, GLfloat width, GLfloat height, int type)
+{
+  guiScrollBar_s* sb = malloc( sizeof( guiScrollBar_s) );
+  sb->_handleAt=0.0;
+  sb->panSize=0.0;
+  sb->minHandleSize=20.0;
+  sb->colBg[0] = 0.8;
+  sb->colBg[1] = 0.3;
+  sb->colBg[2] = 0.3;
+  sb->colBg[3] = 1.0;
+  sb->colBorder[0] = 0.9;
+  sb->colBorder[1] = 0.5;
+  sb->colBorder[2] = 0.5;
+  sb->colBorder[3] = 0.95;
+  sb->size.x=width;
+  sb->size.y=height;
+
+  _guiAddElement( container, GUI_TYPE_SCROLLBAR, (void*)sb );
+  return(sb);
+}
+
 void eoGuiContextSet( guiWindow_s* container )
 {
   activeContext = container;
+}
+
+void _guiDestroyScrollBar( guiScrollBar_s* sb )
+{
+  free(sb);
 }
 
 void _guiDestroyWin( guiWindow_s* win );
@@ -379,6 +407,9 @@ void _guiDestroyElements( listItem* list )
       break;
       case GUI_TYPE_IMAGE:
         _guiDestroyImg( (guiImage_s*)e->data );
+      break;
+      case GUI_TYPE_SCROLLBAR:
+        _guiDestroyScrollBar( (guiScrollBar_s*)e->data );
       break;
       default:
         eoPrint("Destruction of GUI type %i not yet implemented.", e->type);
@@ -484,9 +515,18 @@ void _guiElementClicked( guiElement_s* e, SDL_MouseButtonEvent* btnEvent, guiWin
         gui.draggedParent = parent;
         gui.mDragOffset.x -= win->pos.x;
         gui.mDragOffset.y -= win->pos.y;
-        gui.dragMe = e->data;
+        gui.dragMe = e;
       }
     }
+    break;
+    case GUI_TYPE_SCROLLBAR:
+      if( btnEvent->state==SDL_PRESSED )
+      {
+        guiScrollBar_s* sb = (guiScrollBar_s*)e->data;
+        gui.mDragOffset.x -= sb->pos.x;
+        gui.mDragOffset.y -= sb->pos.y + sb->_handleAt;
+        gui.dragMe = e;
+      }
     break;
     case GUI_TYPE_IMAGE:
       if( btnEvent->state==SDL_RELEASED )
@@ -538,10 +578,8 @@ void _guiFindClickedElement( SDL_MouseButtonEvent* btnEvent )
 {
   GLubyte pix[3];
 
-
   if( activeContext )
   {
-
     //We draw not to the screen, but to oour texture
     eoGfxFboRenderBegin( gui.renderTex );
     eoGfxFboClearTex();
@@ -559,13 +597,9 @@ void _guiFindClickedElement( SDL_MouseButtonEvent* btnEvent )
     //Stop renderingf to texture
     eoGfxFboRenderEnd();
 
-//    eoPrint("Idcolor at %i, %i is %i,%i,%i", btnEvent->x, btnEvent->y, pix[0], pix[1], pix[2]);
-
     //Find the element that was clicked
     _guiFindElementByColor( activeContext, pix, btnEvent );
-
   }
-
 }
 
 void _guiMouseEvent( inputEvent* e )
@@ -582,16 +616,53 @@ void _guiMouseEvent( inputEvent* e )
           //Check that we don't drag it outside it's parent window
           int x = e->mouse->motion.x-gui.mDragOffset.x;
           int y = e->mouse->motion.y-gui.mDragOffset.y;
-          int w = gui.draggedParent->_size.x -3;
-          int h = gui.draggedParent->_size.y;
-          if( gui.draggedParent->showClose || gui.draggedParent->showTitle )
+
+          if( gui.dragMe->type == GUI_TYPE_WINDOW )
           {
-            h -= (eoTxtHeight( gui.draggedParent->font ) + 6 + 3 + 3);
-          }
-          if( (x > 3 && y > 3) && ( x+gui.dragMe->_size.x < w && y+gui.dragMe->_size.y < h) )
+            guiWindow_s* win = (guiWindow_s*)gui.dragMe->data;
+            int w = gui.draggedParent->_size.x -3;
+            int h = gui.draggedParent->_size.y;
+            if( gui.draggedParent->showClose || gui.draggedParent->showTitle )
+            {
+              h -= (eoTxtHeight( gui.draggedParent->font ) + 6 + 3 + 3);
+            }
+            if( (x > 3 && y > 3) && ( x+win->_size.x < w && y+win->_size.y < h) )
+            {
+              win->pos.x = x;
+              win->pos.y = y;
+            }
+          } else if( gui.dragMe->type == GUI_TYPE_SCROLLBAR)
           {
-            gui.dragMe->pos.x = x;
-            gui.dragMe->pos.y = y;
+            guiScrollBar_s* sb = (guiScrollBar_s*)gui.dragMe->data;
+
+            sb->_handleAt = y;
+
+            if( sb->_handleAt < 0 )
+            {
+              sb->_handleAt =0;
+            } else
+            if( sb->_handleAt+sb->_handleSize > sb->size.y)
+            {
+              sb->_handleAt = sb->size.y-sb->_handleSize;
+            }
+
+            GLfloat handle = sb->_handleSize;
+            GLfloat freeScroll = sb->size.y - handle;
+            GLfloat pan = sb->panSize;
+            GLfloat pos = sb->_handleAt;
+
+            GLfloat scrollablePanLeft = pan-sb->size.y;
+
+            if(scrollablePanLeft < 0 ) scrollablePanLeft=0;
+
+            GLfloat scale = scrollablePanLeft/sb->size.y;
+
+
+            sb->panOffset = scale * sb->_handleAt;
+
+
+            eoPrint("AtY: %f Offset: %f", sb->_handleAt, sb->panOffset );
+
           }
         }
       }
@@ -835,6 +906,9 @@ void _guiDrawElements( listItem* l, GLfloat ofx, GLfloat ofy )
       case GUI_TYPE_WINDOW:
         _guiDrawWin( (guiWindow_s*)e->data, ofx,ofy );
       break;
+      case GUI_TYPE_SCROLLBAR:
+        _guiDrawScrollBar( (guiScrollBar_s*)e->data, ofx, ofy );
+      break;
     }
   }
 }
@@ -887,6 +961,36 @@ void _guiDrawWin( guiWindow_s* win, GLfloat ofx, GLfloat ofy )
 
   //Then we draw the list of elements.
   _guiDrawElements( win->elements, ofx, ofy  );
+}
+
+void _guiDrawScrollBar( guiScrollBar_s* sb, GLfloat ofx, GLfloat ofy )
+{
+  GLfloat x = sb->pos.x+ofx;
+  GLfloat y = sb->pos.y+ofy;
+  GLfloat w = sb->size.x;
+  GLfloat h = sb->size.y;
+
+  sb->_handleSize = sb->size.y - (sb->panSize-sb->size.y);
+
+  if( sb->_handleSize < sb->minHandleSize )
+  {
+    sb->_handleSize=sb->minHandleSize;
+  } else if( sb->_handleSize > sb->size.y )
+  {
+    sb->_handleSize = sb->size.y;
+  }
+
+  if( gui.useIdColor )
+  {
+    _guiBox( x,y+sb->_handleAt,w,h );
+  } else {
+    glDisable( GL_TEXTURE_2D );
+    glColor4f( sb->colBg[0],sb->colBg[1],sb->colBg[2],sb->colBg[3] );
+    _guiBox( x,y+sb->_handleAt, w, sb->_handleSize );
+    glColor4f( sb->colBorder[0],sb->colBorder[1],sb->colBorder[2],sb->colBorder[3] );
+    _guiBorder(x,y,w,h);
+  }
+
 }
 
 void guiDraw()

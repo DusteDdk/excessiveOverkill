@@ -185,6 +185,7 @@ typedef struct {
   GLfloat rotation[3];    //Rotation of sprite
   GLfloat color[4]; //Color of this particle
   GLfloat size;
+  int flick;
   sprite_s* sprite; //The sprite shown
 } particle_s;
 
@@ -351,6 +352,9 @@ typedef void (*inputCallback)(inputEvent*);
 #define GUI_TYPE_IMAGE 3
 //A scrollable textbox.
 #define GUI_TYPE_TEXTBOX 4
+//A scrollbar
+#define GUI_TYPE_SCROLLBAR 5
+
 
 #define BTN_HIDECLOSE (void*)0
 #define BTN_SHOWCLOSE (void*)1
@@ -410,14 +414,48 @@ typedef struct {
   void* callbackData;
 } guiImage_s;
 
+#define EO_GUI_TXTBOX_NOSELECT 1
+#define EO_GUI_TXTBOX_SINGLESELECT 2
+#define EO_GUI_TXTBOX_MULTISELECT 3
+
+#define EO_GUI_VSCROLLBAR 1
+#define EO_GUI_HSCROLLBAR 2
+
+typedef struct {
+    int type; //Vertical or Horizontal
+    vec2 size;
+    vec2 pos;
+    GLfloat panSize; //Size of the area to be scrolled (the virtual size)
+    GLfloat panOffset;  //How far into the area is it scolled
+    GLfloat _handleAt;  //Handle position
+    GLfloat _handleSize; //Size of the handle (scales according to the panArea)
+    GLfloat minHandleSize; //Minimum size of the handle (defaults to 20 px)
+    GLfloat colBg[4];
+    GLfloat colBorder[4];
+
+} guiScrollBar_s;
+
 typedef struct {
   vec2 pos;
   vec2 size;
   int font,fontPos;
-  char** _lines;     //Array of lines, inputstring is split by \n
-  int    _numLines;  //Number of lines in array
-  int    _scrollLines;//Line currently starting the scrollbuffer
+  listItem* _lines;     //Array of lines, inputstring is split by \n
+  int_fast8_t selectable; //Number of lines allowed to be selected (0 means no lines, -1 means all, and > 0 means that number)
+  GLfloat selBgCol[4]; //Background color of selection
+  GLfloat colBorder[4]; //BorderColor
+  listItem* selectedLines;
+  guiScrollBar_s* scrollbar;
+  bool editable;  //Can the contents be edited?
 } guiTextBox_s;
+
+typedef struct {
+  guiWindow_s* window;
+  guiButton_s* btnCancel;
+  guiButton_s* btnSelect;
+  guiTextBox_s* fileList;
+  guiTextBox_s* dirList;
+  listItem* filter; //If empty { displays all filetypes } else { a list of char* containing fileendings (part after the .) }
+} eoGuiFileSelectionDialog_s;
 
 typedef struct {
   int type;     //Type of object

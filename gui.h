@@ -37,6 +37,7 @@ guiLabel_s* eoGuiAddLabel  (guiWindow_s* container, GLfloat posx, GLfloat posy, 
 guiButton_s* eoGuiAddButton (guiWindow_s* container, GLfloat posx, GLfloat posy, GLfloat width, GLfloat height, const char* text, guiCallback callback );
 guiImage_s* eoGuiAddImage  (guiWindow_s* container, GLfloat posx, GLfloat posy, const char* fileName );
 guiTextBox_s* eoGuiAddTextBox(guiWindow_s* container, GLfloat posx, GLfloat posy, int numLines, int font, const char* text);
+guiScrollBar_s* eoGuiAddScrollBar( guiWindow_s* container, GLfloat posx, GLfloat posy, GLfloat width, GLfloat height, int type);
 
 void eoGuiShowCursor( int showCursor );
 int eoGuiIsCursorVisible();
@@ -48,6 +49,7 @@ void eoGuiContextDel( guiWindow_s* container);  //Free all elements in container
 
 void eoGuiShow();
 void eoGuiHide();
+
 
 ///TODO: Implement file-selection dialog. If multipleFiles = TRUE, multiple files can be selected, if fileType is NULL, all files can be selected, otherwise only files ending in ."fileType" If NULL, showing ending, else, only showing name.
 #define EO_FILESELECTION_OPEN 1
