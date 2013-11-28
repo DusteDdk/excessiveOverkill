@@ -65,6 +65,8 @@ char** explode(char delim, char* buf, int size)
   int start=0;
   int numFound=0;
 
+  int lPos=0;
+
   //Clear all pointers so those can be used to check if they point to a string.
   for(pos=0; pos < size; pos++)
     t[pos]=0;
@@ -73,6 +75,7 @@ char** explode(char delim, char* buf, int size)
   {
     if(buf[pos]==delim)
     {
+      lPos=pos;
       t[numFound] = malloc(sizeof(char)*(pos-start+2));
       strncpy( t[numFound], buf+start, pos-start );
       t[numFound][pos-start]=0; //0 terminate
@@ -80,6 +83,13 @@ char** explode(char delim, char* buf, int size)
       start=pos+1;
       numFound++;
     }
+  }
+
+  if(lPos!=pos && numFound < size)
+  {
+    t[numFound] = malloc(sizeof(char)*(pos-start+2));
+    strncpy( t[numFound], buf+start, pos-start );
+    t[numFound][pos-start]=0; //0 terminate
   }
 
   return(t);
