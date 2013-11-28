@@ -424,16 +424,14 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
       if( line[0] == 'f' && line[1] == ' ' )
       {
         //parse face ( vi/ti/ti vi/ti/ni vi/ti/ni ) because we only support triangulated faces.
-        sprintf(bufa, "%s ", line+2);
         //Explode to sets of vi/ti/ni strings stored in t[0] 1 2
-        char** t = explode( ' ', bufa, 3 );
+        char** t = explode( ' ', line+2, 3 );
 
         for(i=0; i<3; i++)
         {
           if(t[i])
           {
-            sprintf(bufb, "%s/", t[i]);
-            char** f = explode('/', bufb, 3);
+            char** f = explode('/', t[i], 3);
 
             faceData[faceIndex].vi[i] = atoi( f[0] );
             faceData[faceIndex].ti[i] = atoi( f[1] );
