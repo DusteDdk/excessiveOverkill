@@ -57,7 +57,7 @@ void eoObjDel(engObj_s* obj);
 void eoObjAttach( engObj_s* parent, engObj_s* child );
 
 void gameRun();
-
+gameState_s* eoGetState();
 void gameSimMovement();
 void gameSimWorld();
 void gameDraw();

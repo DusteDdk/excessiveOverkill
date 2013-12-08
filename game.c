@@ -38,6 +38,11 @@ static GLfloat showFboTexAlpha=0.5;
 static GLfloat fboTexScale=1.0;
 static GLubyte pix[3];
 
+gameState_s* eoGetState()
+{
+  return(&state);
+}
+
 void _gameTogglePause( inputEvent* e )
 {
   state.isPaused = !state.isPaused;
@@ -93,10 +98,10 @@ void eoGameEnableMouseSelection(GLfloat scale)
   eoInpAddHook( INPUT_EVENT_MOUSE, INPUT_FLAG_MOVEMENT|INPUT_FLAG_DOWN|INPUT_FLAG_UP, 0, _mouseEvent );
   findObjsByMouse=1;
   fboTexScale=scale;
-  gObjectSelectionTex=eoGfxFboCreate( eoSetting()->res.x*scale, eoSetting()->res.y*scale );
+  gObjectSelectionTex=eoGfxFboCreate( eoSetting()->res.x*scale, eoSetting()->res.y*scale, TRUE );
 
-  gOvrHackL=eoGfxFboCreate( eoSetting()->res.x/2.0, eoSetting()->res.y );
-  gOvrHackR=eoGfxFboCreate( eoSetting()->res.x/2.0, eoSetting()->res.y );
+  gOvrHackL=eoGfxFboCreate( eoSetting()->res.x/2.0, eoSetting()->res.y, TRUE );
+  gOvrHackR=eoGfxFboCreate( eoSetting()->res.x/2.0, eoSetting()->res.y, TRUE );
 }
 
 int _setMouseSelectionScale( const char* arg, void* unused )
@@ -150,19 +155,19 @@ void eoGameInit()
   eoInpAddFunc("ipdp", "Increase IPD", ipdp, INPUT_EVENT_KEY);
   eoInpAddFunc("ipdm", "Decrease IPD", ipdm, INPUT_EVENT_KEY);
 
-    eoInpAddFunc("borderp", "Increase IPD", borderp, INPUT_EVENT_KEY);
+  eoInpAddFunc("borderp", "Increase IPD", borderp, INPUT_EVENT_KEY);
   eoInpAddFunc("borderm", "Decrease IPD", borderm, INPUT_EVENT_KEY);
   eoVarAdd(CON_TYPE_FLOAT, 0, &ipd, "ipd");
   eoVarAdd(CON_TYPE_INT, 0, &stereo, "stereo");
 
   eoVarAdd(CON_TYPE_FLOAT, 0, &border, "border");
-
+  /*
   eoExec("bind z ipdp");
   eoExec("bind x ipdm");
 
   eoExec("bind 1 borderp");
   eoExec("bind 2 borderm");
-  eoExec("echo yah");
+*/
   state.world.objs = initList();
   state._deleteObjs = initList();
   state.world.gameFrameStart = NULL;
@@ -449,8 +454,18 @@ void gameRun()
 
   if( findObjsByMouse == 1 ) //If -1, it's disabled
   {
+
     eoGfxFboRenderBegin( gObjectSelectionTex );
+
+
     eoGfxFboClearTex();
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glDepthFunc(GL_LEQUAL);
+    glClearDepth(1.0);
+    glEnable(GL_DEPTH_TEST);
+
+
+
     gameDraw(state.world.objs);
     eoGfxFboRenderEnd();
 
@@ -536,6 +551,7 @@ engObj_s* eoObjCreate(int type)
   obj->id = state.nextObj;
   obj->components = initList();
   obj->gameData = NULL;
+  obj->className = NULL;
 
   //Set solid-color
   obj->solidColor[0] = 255;
@@ -768,19 +784,26 @@ void gameDraw(listItem* objList)
       switch(obj->type)
       {
         case ENGOBJ_MODEL:
-          if( findObjsByMouse == 1 && obj->clickedFunc )
+          if( findObjsByMouse == 1 )
           {
-            drawClayModel( obj->model, obj->_idcol, 1 );
-          } else if( obj->renderType == EO_RENDER_FULL )
-          {
-            drawModel(obj->model, obj->fullBright);
-          } else if( obj->renderType == EO_RENDER_WIREFRAME )
-          {
-            drawWireframeModel(obj->model, obj->solidColor, obj->fullBright );
-          } else if( obj->renderType == EO_RENDER_CLAY )
-          {
-            drawClayModel(obj->model, obj->solidColor, obj->fullBright );
-          }
+            if( obj->clickedFunc)
+            {
+              drawClayModel( obj->model, obj->_idcol, 1 );
+            }
+          } else {
+
+            if( obj->renderType == EO_RENDER_FULL )
+            {
+              drawModel(obj->model, obj->fullBright);
+            } else if( obj->renderType == EO_RENDER_WIREFRAME )
+            {
+              drawWireframeModel(obj->model, obj->solidColor, obj->fullBright );
+            } else if( obj->renderType == EO_RENDER_CLAY )
+            {
+              drawClayModel(obj->model, obj->solidColor, obj->fullBright );
+            }
+        }
+
         break;
 
         case ENGOBJ_SPRITE:

@@ -26,6 +26,7 @@
 #include <math.h>
 #include <unistd.h>
 #include "gfxeng.h"
+#include "data.h"
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
@@ -84,12 +85,10 @@ void readMtlLib( vboModel* model, const char* dir,const char* fileName )
   char bufb[512];
   char bufc[512];
 
-  sprintf( bufa, "%s%s", dir,fileName );
-
-  FILE* file = fopen( bufa, "r" );
+  FILE* file = fopen( Data(dir, fileName), "r" );
   if(!file)
   {
-    eoPrint("Error: Couldn't open '%s' for reading.", line);
+    eoPrint("Error: Couldn't open '%s' for reading.", Data(dir,fileName) );
     return;
   }
 
@@ -159,10 +158,9 @@ void readMtlLib( vboModel* model, const char* dir,const char* fileName )
           line[6]=' ';
           splitVals(' ', line, bufa, bufb);
 
-          sprintf( bufa, "%s%s", dir,bufb );
           free( model->textureName );
-          model->textureName = malloc( sizeof(char)*strlen(bufa)+1);
-          strcpy( model->textureName, bufa );
+          model->textureName = malloc( sizeof(char)*strlen(Data(dir,bufb) )+1);
+          strcpy( model->textureName, Data(dir,bufb) );
           model->texture = eoGfxLoadTex( model->textureName );
           if(!model->texture)
           {
@@ -308,11 +306,10 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
   materials=0;
 
   //Try to open file for reading.
-  sprintf( bufa, "%s%s",dir,fileName );
-  FILE* file = fopen( bufa, "r" );
+  FILE* file = fopen( Data(dir, fileName), "r" );
   if(!file)
   {
-    eoPrint("Error: Couldn't open '%s' for reading.", bufa);
+    eoPrint("<1>Error: Couldn't open '%s' for reading.", Data(dir, fileName));
     return(0);
   }
 
@@ -595,8 +592,10 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
 
 
   model->name = malloc( strlen(fileName)+1 );
+  model->dir = malloc( strlen( dir )+1 );
   strcpy( model->name, fileName );
-  //Loaded model overview for debug
+  strcpy( model->dir, dir );
+   //Loaded model overview for debug
   eoPrint("  Model Overview (%s):", model->name);
   eoPrint("   VBO buffer name: %i", model->bufferName);
   eoPrint("   %i triangles.", model->tris );
@@ -669,6 +668,7 @@ void drawModel( vboModel* model, int_fast8_t fullBright )
 
 void drawClayModel( vboModel* model, GLubyte c[4], int_fast8_t allWhite )
 {
+
   int cMat=0;
     if(allWhite)
     {
@@ -749,6 +749,9 @@ void eoModelFree( vboModel* model )
 
   //Free model name
   free( model->name );
+
+  //Free model dir
+  free( model->dir );
 
   //Free model texture
   glDeleteTextures(1, &model->texture);

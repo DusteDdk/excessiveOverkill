@@ -355,6 +355,14 @@ vec3 eoCamDirectionGet()
   return( eoVec3FromAngle( xrot, yrot ) );
 }
 
+vec2 eoCamRotGet()
+{
+  vec2 r;
+  r.x=xrot;
+  r.y=yrot;
+  return(r);
+}
+
 void _camInput(inputEvent* e)
 {
   if(e->key)

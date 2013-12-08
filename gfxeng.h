@@ -34,7 +34,7 @@ GLuint eoGfxTexFromSdlSurf( SDL_Surface* surf );
 GLuint eoGfxLoadTex( const char* fileName );
 void engFreeTex( GLuint texName );
 
-renderTex_t* eoGfxFboCreate(int width, int height);
+renderTex_t* eoGfxFboCreate(int width, int height, bool useDepthBuffer);
 void eoGfxFboDel( renderTex_t* rt ); //Frees FBO and texture.
 void eoGfxFboRenderBegin( renderTex_t* rt ); //Binds an fbo
 void eoGfxFboRenderEnd(); //Unbinds

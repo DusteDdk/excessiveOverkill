@@ -32,6 +32,7 @@
 #include "sound.h"
 #include "camera.h"
 #include "sprite.h"
+#include "strings.h"
 #include "version.h"
 #include "particles.h"
 #include "game.h"
@@ -42,7 +43,7 @@
 
 #include "list.h"
 #include "data.h"
-
+#include "sceneLoader.h"
 int eoInitAll(int argc, char** argv, const char* datadir);
 void eoMainLoop();
 void eoQuit();

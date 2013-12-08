@@ -112,6 +112,7 @@ typedef struct {
 
 typedef struct {
   char* name;
+  char* dir;
   GLuint bufferName;
   GLuint vaoName;
   GLuint tris; //Number of triangles
@@ -239,7 +240,7 @@ typedef struct {
 #define EO_RENDER_CLAY 2
 
 typedef struct eoObj_struct {
-
+  char* className;
   int disabled; //Do nothing to this object.
   int id;
   int deleteMe;
@@ -306,6 +307,11 @@ typedef struct {
 #define INPUT_FLAG_EXCLUSIVE 8
 //Call on move (joystick/mouse)
 #define INPUT_FLAG_MOVEMENT 16
+
+//For the mouse
+#define INPUT_MOUSEBTN_HOVER 0
+#define INPUT_MOUSEBTN_DOWN 1
+#define INPUT_MOUSEBTN_UP -1
 
 
 //inputMouse/Stick event contains motion
@@ -377,6 +383,7 @@ typedef struct {
   vec2 _size;
   GLfloat colBg[4]; //Initialized to a lovely grey semi transperant.
   GLfloat colBorder[4]; //And a sligthly lighter grey
+  bool visible;   //Do not draw window or any elements
   bool _draw;     //Draw the window, or only it's elements
   bool showTitle; //Show title line?
   bool showClose; //Show close button (only if title line is shown)

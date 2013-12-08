@@ -12,7 +12,7 @@ LIBS = -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lpng -lm -lz -lpthread -lGL -lGL
 
 OBJS = camera.o console.o data.o eng.o game.o gfxeng.o gltxt.o\
 gui.o gui-test.o input.o list.o particles.o screenshot.o sound.o\
-sprite.o strings.o tick.o vboload.o 3rd/eo_glew.o
+sprite.o strings.o tick.o vboload.o 3rd/eo_glew.o sceneLoader.o
 
 ########################################################################
 

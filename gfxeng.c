@@ -405,8 +405,10 @@ void eoGfxFboRenderEnd()
 }
 
 
-renderTex_t* eoGfxFboCreate(int width, int height)
+renderTex_t* eoGfxFboCreate(int width, int height, bool useDepthBuffer)
 {
+
+  GLuint depth_rb;
   renderTex_t* rt = malloc( sizeof(renderTex_t) );
   rt->w = width;
   rt->h = height;
@@ -426,6 +428,18 @@ renderTex_t* eoGfxFboCreate(int width, int height)
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt->tex, 0 );
+
+  if( useDepthBuffer )
+  {
+    //-------------------------
+    glGenRenderbuffersEXT(1, &depth_rb);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, depth_rb);
+    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, rt->tw,rt->th);
+    //-------------------------
+    //Attach depth buffer to FBO
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depth_rb);
+  }
+
 
 
   if( glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT )

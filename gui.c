@@ -132,6 +132,7 @@ guiWindow_s* eoGuiContextCreate()
   w->_size.x = (int)eoSetting()->res.x;
   w->_size.y = (int)eoSetting()->res.y;
   w->_draw = FALSE;
+  w->visible = TRUE;
   w->showTitle = FALSE;
   w->showClose = FALSE;
   w->font = 0;
@@ -175,6 +176,7 @@ guiWindow_s* eoGuiAddWindow( guiWindow_s* container, int posx, int posy, int wid
   w->_size.x = width;
   w->_size.y = height;
   w->_draw = TRUE;
+  w->visible = TRUE;
   w->showTitle = TRUE;
   w->font = FONT_MEDIUM;
   w->fontPos = TXT_LEFT;
@@ -661,7 +663,7 @@ void _guiMouseEvent( inputEvent* e )
             sb->panOffset = scale * sb->_handleAt;
 
 
-            eoPrint("AtY: %f Offset: %f", sb->_handleAt, sb->panOffset );
+            eoPrint("AtY: %f Offset: %f", pos, sb->panOffset );
 
           }
         }
@@ -779,7 +781,7 @@ void guiInit()
   gui.useIdColor = 0;
   gui.showIdTex = 0;
 
-  gui.renderTex = eoGfxFboCreate(eoSetting()->res.x,eoSetting()->res.y);
+  gui.renderTex = eoGfxFboCreate(eoSetting()->res.x,eoSetting()->res.y, FALSE);
 
   eoVarAdd( CON_TYPE_INT,0, &gui.useIdColor, "gui-idcol" );
   eoVarAdd( CON_TYPE_INT,0, &gui.showIdTex, "gui-showidtex" );
@@ -915,6 +917,10 @@ void _guiDrawElements( listItem* l, GLfloat ofx, GLfloat ofy )
 
 void _guiDrawWin( guiWindow_s* win, GLfloat ofx, GLfloat ofy )
 {
+  if( !win->visible )
+  {
+    return;
+  }
   //Offsets from this window
   //We draw the window graphics (if any)
   if( win->_draw )
