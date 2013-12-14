@@ -10,7 +10,7 @@ CFLAGS = -shared
 LDFLAGS=$(CFLAGS) 
 LIBS = -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lopengl32 -lglu32
 
-DEFS = -DWIN32 -DWIN32_CROSS -DBUILDING DLL
+DEFS = -DWIN32 -DWIN32_CROSS -DBUILDING_DLL
 
 OBJS = camera.o console.o data.o eng.o game.o gfxeng.o gltxt.o\
 gui.o gui-test.o input.o list.o particles.o screenshot.o sound.o\
