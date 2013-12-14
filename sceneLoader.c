@@ -24,7 +24,6 @@ listItem* eoLoadScene( const char* fileName, engObjInitFunc objInit )
       {
         if( strcmp(line,"[model]") == 0 )
         {
-          eoPrint("Created Model entity.");
           obj = eoObjCreate( ENGOBJ_MODEL );
         } else if( strcmp(line,"[sprite]" ) == 0 )
         {
@@ -81,8 +80,6 @@ listItem* eoLoadScene( const char* fileName, engObjInitFunc objInit )
 
               strcpy(set, val+i);
               val[i]=0;
-              eoPrint("Dir: %s", val);
-              eoPrint("File: %s", set);
               obj->model = eoModelLoad( val, set );
 
             } else {

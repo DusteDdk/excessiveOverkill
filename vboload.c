@@ -55,6 +55,112 @@ typedef struct {
 } vData;
 #pragma pack(pop)
 
+static listItem* modelCache=NULL;
+
+typedef struct {
+    int count;
+    char* dir;
+    char* file;
+    vboModel* model;
+} modelRefItem;
+
+void newRef( const char* dir, const char* file, vboModel* model)
+{
+  modelRefItem* r = malloc( sizeof(modelRefItem) );
+  r->dir = malloc(sizeof(dir)+1);
+  strcpy(r->dir, dir);
+  r->file = malloc(sizeof(file)+1);
+  strcpy(r->file, file);
+  r->model=model;
+  r->count=1;
+  listAddData(modelCache, (void*)r);
+
+  eoPrint("Cached model %s - %s - %p", dir,file,model);
+}
+
+void addRef(const char* dir, const char* file, vboModel* model )
+{
+  listItem* it;
+  bool found=FALSE;
+  //Check if the list is inited.
+  if(!modelCache)
+  {
+    modelCache = initList();
+  }
+
+  //See if it is there and update it's ref
+  it=modelCache;
+
+  while( (it=it->next) )
+  {
+    modelRefItem* r = (modelRefItem*)it->data;
+    if( r->model==model )
+    {
+      r->count++;
+      found=TRUE;
+      break;
+    }
+  }
+
+  //Otherwise add a new one
+  if( !found )
+  {
+    newRef(dir,file,model);
+  }
+}
+
+vboModel* getRef( const char* dir, const char* file )
+{
+  listItem* it;
+
+  //Check if the list is inited.
+  if(!modelCache)
+  {
+    modelCache = initList();
+  }
+
+  it=modelCache;
+
+  while( (it=it->next) )
+  {
+    modelRefItem* r = (modelRefItem*)it->data;
+    if( strcmp(file, r->file)==0 && strcmp(dir, r->dir)==0 )
+    {
+      r->count++;
+      return(r->model);
+    }
+  }
+  return(NULL);
+}
+
+
+void _eoModelFree(vboModel* model);
+
+void remRef( vboModel* model)
+{
+  listItem* it;
+
+  //See if it is there and update it's ref
+  it=modelCache;
+
+  while( (it=it->next) )
+  {
+    modelRefItem* r = (modelRefItem*)it->data;
+    if( r->model==model  )
+    {
+      r->count--;
+      if( r->count < 1)
+      {
+        free(r->dir);
+        free(r->file);
+        _eoModelFree(r->model);
+        listRemoveItem(modelCache,it);
+      }
+      break;
+    }
+  }
+}
+
 //Used for sorting according to material
 int compMat( const void* facea, const void* faceb )
 {
@@ -296,12 +402,18 @@ void readMtlLib( vboModel* model, const char* dir,const char* fileName )
 //Loads an obj file and returns the initialized model. Caller must //free. Return 0 on err
 vboModel* eoModelLoad( const char* dir, const char* fileName )
 {
-  eoPrint("eoModelLoad('%s','%s');",dir, fileName);
   int i;
   char line[512];
   char bufa[512];
   char bufb[512];
   char bufc[512];
+
+  vboModel* m = getRef( dir, fileName );
+  if( m )
+  {
+    return(m);
+  }
+  eoPrint("eoModelLoad('%s','%s');",dir, fileName);
 
   //In case of more materials, we ignore the rest.
   materials=0;
@@ -607,6 +719,9 @@ vboModel* eoModelLoad( const char* dir, const char* fileName )
   memset( materials, 0, sizeof( matProps )* model->matCount );
   free(materials);
 
+  //Cache it
+  addRef( model->dir, model->name, model );
+
   return(model);
 }
 
@@ -731,8 +846,13 @@ void drawWireframeModel( vboModel* model, GLubyte c[4], int_fast8_t allWhite )
   glLineWidth(1);
 }
 
-//Takes care of //freeing resources allocated to model (memory for struct, texture, buffers)
 void eoModelFree( vboModel* model )
+{
+  remRef(model);
+}
+
+//Takes care of //freeing resources allocated to model (memory for struct, texture, buffers)
+void _eoModelFree( vboModel* model )
 {
   int i;
   //Delete ogl buffer object
