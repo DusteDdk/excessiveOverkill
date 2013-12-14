@@ -21,6 +21,7 @@
 #define STRINGS_H_INCLUDED
 
 void stripNewLine(char* str);
+void stripTabs(char* str);
 int splitVals(char ch,const char* buf, char* set, char* val); //Splits a setting=value line and returns true if it did. else returns 0
 int charrpos(const char* str, char c); //Return position of last instance of character c
 

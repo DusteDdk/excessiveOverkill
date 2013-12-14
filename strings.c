@@ -31,6 +31,29 @@ void stripNewLine(char* str)
   }
 }
 
+void stripTabs(char* str)
+{
+  int i,ii=0;
+  int len = strlen(str);
+  char* dest = malloc( len+1 );
+  memset(dest, 0, len+1 );
+  for(i=0; i<len; i++)
+  {
+    if( str[i] != 0x9 )
+    {
+      dest[ii]=str[i];
+      ii++;
+    }
+  }
+
+  printf("Before: %s\n", str);
+  strcpy(str,dest);
+  printf("After: %s\n", str);
+  free(dest);
+
+}
+
+
 int splitVals(char ch,const char* buf, char* set, char* val)
 {
   int strpos=0;

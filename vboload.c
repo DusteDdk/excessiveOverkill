@@ -125,7 +125,8 @@ void readMtlLib( vboModel* model, const char* dir,const char* fileName )
   while(fgets(line, 511, file))
   {
     stripNewLine(line);
-    if( strlen(line)>6)
+    stripTabs(line);
+    if( strlen(line)>6 )
     {
       restore=line[6];
       line[6]=0;
