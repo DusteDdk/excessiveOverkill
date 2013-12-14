@@ -145,10 +145,6 @@ SDL_Surface* engVarScreen;
 
 int eoInitAll(int argc, char** argv, const char* datadir)
 {
-  #ifdef WIN32
-  FILE *stream;
-  stream = freopen("CON", "w", stdout);
-  #endif
 
   DataSetDir( datadir );
 
