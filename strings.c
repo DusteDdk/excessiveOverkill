@@ -45,10 +45,7 @@ void stripTabs(char* str)
       ii++;
     }
   }
-
-  printf("Before: %s\n", str);
   strcpy(str,dest);
-  printf("After: %s\n", str);
   free(dest);
 
 }
