@@ -67,9 +67,9 @@ typedef struct {
 void newRef( const char* dir, const char* file, vboModel* model)
 {
   modelRefItem* r = malloc( sizeof(modelRefItem) );
-  r->dir = malloc(sizeof(dir)+1);
+  r->dir = malloc(strlen(dir)+1);
   strcpy(r->dir, dir);
-  r->file = malloc(sizeof(file)+1);
+  r->file = malloc(strlen(file)+1);
   strcpy(r->file, file);
   r->model=model;
   r->count=1;
