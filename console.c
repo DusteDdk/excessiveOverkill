@@ -261,7 +261,7 @@ int _conEcho( const char* arg, void* unused )
 
 int _conExecScript( const char* arg, void* unused )
 {
-  FILE* scr = fopen( arg, "r" );
+  FILE* scr = fopen( Data("",arg), "r" );
   size_t bufSize = 1023;
   char* buf = malloc(bufSize+1);
 

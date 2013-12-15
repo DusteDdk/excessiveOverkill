@@ -139,7 +139,6 @@ void ipdm()
 
 void eoGameInit()
 {
-
   memset( &state, 0, sizeof(gameState_s) );
   eoPrint("gameInit();");
 
@@ -584,6 +583,7 @@ void eoObjBake(engObj_s* obj)
     {
       //Set hitbox
       obj->_hitBox = obj->model->size;
+//      eoPrint("Hitbox size: %f, %f, %f", obj->_hitBox.x, obj->_hitBox.y, obj->_hitBox.z);
 
       //Set "onclick" callback if any.
       if( obj->clickedFunc )
@@ -811,12 +811,17 @@ void gameDraw(listItem* objList)
           eoGfxBillboardBegin();
           glEnable(GL_TEXTURE_2D);
           glDisable( GL_LIGHTING );
+          glDisable(GL_DEPTH_TEST);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
           glColor4f( 1.0,1.0,1.0,1.0 );
           spriteDraw( obj->sprite );
           glEnable( GL_LIGHTING );
           eoGfxBillBoardEnd();
           glPopMatrix();
-        break;
+          glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+          glEnable(GL_DEPTH_TEST);
+          break;
 
         case ENGOBJ_SOUND:
           eoSamplePlay( obj->sound, 128 ); ///Fixme; should be relative to the camera position.
