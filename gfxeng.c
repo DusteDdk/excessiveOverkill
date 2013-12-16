@@ -562,13 +562,7 @@ void eoGfxBillBoardEnd()
 
 GLfloat eoRandFloat( GLfloat max )
 {
-  if( max > 0 )
-  {
-    max *= 10000.0;
-    GLfloat d = (GLfloat)(rand()%(int)max);
-    return( d/10000.0 );
-  }
-  return(0);
+  return(((GLfloat)rand()) / (((GLfloat)RAND_MAX)/max));
 }
 
 GLfloat eoVec3Len( vec3 v )
