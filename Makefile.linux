@@ -2,11 +2,11 @@ CC = gcc
 LD = $(CC)
 STRIP = strip
 
-NAME=ExcessiveOverkill.so
+NAME=libExcessiveOverkill.so
 TARGET= $(NAME)
 
 INCS =  -I. -I./3rd -I/usr/include
-CFLAGS = -shared -fPIC
+CFLAGS = -shared -fPIC -std=gnu99
 LDFLAGS=$(CFLAGS) 
 LIBS = -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lpng -lm -lz -lpthread -lGL -lGLU
 

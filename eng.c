@@ -120,6 +120,7 @@ Alt i main skal v��k og kaldes af eoInit
   eoSetting
 #endif
 
+#include <unistd.h>
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
